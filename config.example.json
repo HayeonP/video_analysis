@@ -1,0 +1,16 @@
+{
+  "model_id": "Qwen/Qwen3-VL-4B-Instruct",
+  "model_revision": "ebb281ec70b05090aa6165b016eac8ec08e71b17",
+  "window_sec": 5.0,
+  "stride_sec": 1.0,
+  "coarse_fps": 1.5,
+  "refine_fps": 4.0,
+  "refine_padding_sec": 1.0,
+  "max_pixels": 262144,
+  "reference_pixels": 65536,
+  "gallery_page_size": 4,
+  "gallery_images_per_entity": 2,
+  "max_new_tokens": 2048,
+  "json_retries": 1,
+  "merge_tolerance_sec": 0.35
+}
