@@ -1,0 +1,142 @@
+{
+  "id": "shot_0007",
+  "source": "/home/rubis/HayeonP/video_analysis/03_adaptive_sampling/outputs/sintel_trainler_full/shots/shot_0007.mp4",
+  "source_sha256": "df9dd2e7f64cdac9385b67ce7a5805f0ec72691c24ab7233c59e71d028142b53",
+  "source_fps": "24",
+  "source_frames": 79,
+  "source_duration_sec": 3.2916666666666665,
+  "original_start_frame": 442,
+  "original_video": "/home/rubis/HayeonP/video_analysis/02_shot_boundary_detection/videos/sintel_trailer_full.mp4",
+  "original_fps": "24",
+  "sampled_frames": 9,
+  "effective_fps": 2.7341772151898733,
+  "frame_reduction_fraction": 0.8860759493670887,
+  "output_video": "sampled.mp4",
+  "output_timing": "VFR: selected frame holds until the next sample; original duration retained",
+  "config": {
+    "analysis_width": 256,
+    "change_budget": 0.08,
+    "min_fps": 1.0,
+    "max_fps": 10.0,
+    "motion_weight": 2.0,
+    "visual_weight": 1.0,
+    "camera_weight": 0.15,
+    "smoothing_seconds": 0.12,
+    "visual_guard": 0.18,
+    "transient_guard": 0.25
+  },
+  "samples": [
+    {
+      "sample_id": 0,
+      "source_frame": 0,
+      "source_time_sec": 0.0,
+      "original_frame": 442,
+      "original_time_sec": 18.416666666666668,
+      "hold_until_frame": 14,
+      "hold_duration_sec": 0.5833333333333334,
+      "image": "frames/frame_00000000.jpg",
+      "reason": "first"
+    },
+    {
+      "sample_id": 1,
+      "source_frame": 14,
+      "source_time_sec": 0.5833333333333334,
+      "original_frame": 456,
+      "original_time_sec": 19.0,
+      "hold_until_frame": 25,
+      "hold_duration_sec": 0.4583333333333333,
+      "image": "frames/frame_00000014.jpg",
+      "reason": "change_budget"
+    },
+    {
+      "sample_id": 2,
+      "source_frame": 25,
+      "source_time_sec": 1.0416666666666667,
+      "original_frame": 467,
+      "original_time_sec": 19.458333333333332,
+      "hold_until_frame": 34,
+      "hold_duration_sec": 0.375,
+      "image": "frames/frame_00000025.jpg",
+      "reason": "change_budget"
+    },
+    {
+      "sample_id": 3,
+      "source_frame": 34,
+      "source_time_sec": 1.4166666666666667,
+      "original_frame": 476,
+      "original_time_sec": 19.833333333333332,
+      "hold_until_frame": 49,
+      "hold_duration_sec": 0.625,
+      "image": "frames/frame_00000034.jpg",
+      "reason": "change_budget"
+    },
+    {
+      "sample_id": 4,
+      "source_frame": 49,
+      "source_time_sec": 2.0416666666666665,
+      "original_frame": 491,
+      "original_time_sec": 20.458333333333332,
+      "hold_until_frame": 58,
+      "hold_duration_sec": 0.375,
+      "image": "frames/frame_00000049.jpg",
+      "reason": "change_budget"
+    },
+    {
+      "sample_id": 5,
+      "source_frame": 58,
+      "source_time_sec": 2.4166666666666665,
+      "original_frame": 500,
+      "original_time_sec": 20.833333333333332,
+      "hold_until_frame": 66,
+      "hold_duration_sec": 0.3333333333333333,
+      "image": "frames/frame_00000058.jpg",
+      "reason": "change_budget"
+    },
+    {
+      "sample_id": 6,
+      "source_frame": 66,
+      "source_time_sec": 2.75,
+      "original_frame": 508,
+      "original_time_sec": 21.166666666666668,
+      "hold_until_frame": 74,
+      "hold_duration_sec": 0.3333333333333333,
+      "image": "frames/frame_00000066.jpg",
+      "reason": "change_budget"
+    },
+    {
+      "sample_id": 7,
+      "source_frame": 74,
+      "source_time_sec": 3.0833333333333335,
+      "original_frame": 516,
+      "original_time_sec": 21.5,
+      "hold_until_frame": 78,
+      "hold_duration_sec": 0.16666666666666666,
+      "image": "frames/frame_00000074.jpg",
+      "reason": "change_budget"
+    },
+    {
+      "sample_id": 8,
+      "source_frame": 78,
+      "source_time_sec": 3.25,
+      "original_frame": 520,
+      "original_time_sec": 21.666666666666668,
+      "hold_until_frame": 79,
+      "hold_duration_sec": 0.041666666666666664,
+      "image": "frames/frame_00000078.jpg",
+      "reason": "last"
+    }
+  ],
+  "validation": {
+    "passed": true,
+    "decoded_frames": 9,
+    "expected_sampled_frames": 9,
+    "exact_sample_timestamps": true,
+    "video_duration_sec": 3.2916666666666665,
+    "video_duration_error_sec": 0.0,
+    "container_duration_error_sec": 0.0,
+    "audio_preserved": true
+  },
+  "comparison_video": "comparison.mp4",
+  "max_hold_seconds": 0.625,
+  "processing_seconds": 3.5006432730006054
+}

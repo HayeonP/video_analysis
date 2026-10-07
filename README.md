@@ -1,194 +1,25 @@
-# 3R Video — Qwen3-VL 이벤트 분석
+# Video Analysis Experiments
 
-Qwen3-VL-4B-Instruct를 로컬 NVIDIA GPU에서 NF4 4bit로 실행한다. 영상 전체에서 사람·캐릭터·동물·물체를 찾고, 등장·행동·상호작용·상태 변화의 시간 구간을 추출한다.
+This repository contains five related stages for video understanding experiments. Each stage is self-contained and has its own README, setup script, and Python dependencies.
 
-전체 처리 흐름과 캐릭터 ID 연결 과정은 **[번호가 붙은 동작 구조도와 단계별 설명](ARCHITECTURE.md)**에서 볼 수 있다. 그림과 설명 표의 1~20번을 기준으로 각 동작을 확인할 수 있다.
-
-## 실행
-
-```bash
-# 별도로 activate할 필요 없음
-./run.sh doctor
-./run.sh analyze "/영상/경로/example.mp4"
-
-# 결과 폴더 지정
-./run.sh analyze "/영상/경로/example.mp4" --output outputs/example
-
-# Python으로 실행해도 같은 가상환경을 자동 사용
-python3 run.py analyze "/영상/경로/example.mp4"
-```
-
-`run.sh`와 `run.py`는 항상 이 프로젝트의 `.venv/bin/python`을 사용한다. 다른 Conda/venv가 활성화되어 있어도 프로젝트 환경으로 전환하며, 다른 디렉터리에서도 절대 경로로 실행할 수 있다. 터미널에서 `source .venv/bin/activate`를 실행할 필요가 없고, 실행 후 사용자의 터미널 환경은 그대로다.
-
-가상환경이 없거나 의존성 설정이 바뀌면 실행기가 `setup.sh`를 자동 실행한다. 최초 설치에는 인터넷이 필요하다. 모델은 Hugging Face 캐시에 저장되며 첫 분석 때 자동 다운로드한다. 미리 준비하려면:
-
-```bash
-./setup.sh
-./run.sh download-model
-```
-
-현재 설치 환경은 Python 3.11, PyTorch 2.7.1 CUDA 12.6, Transformers 4.57.6, bitsandbytes 0.48.2다. 모델은 NF4와 double quantization을 사용하고, vision 모듈과 출력 헤드는 원래 정밀도를 유지한다. 프레임 디코딩은 PyAV로 처리하므로 별도 FFmpeg 명령 실행이 필요 없다.
-
-## 기본 분석 과정
-
-1. **후보 추출:** 5초 윈도우, 1초 간격, 목표 1.5fps. 마지막 짧은 구간도 처리한다. 매 프레임을 따로 호출하지 않고 시간 정보가 있는 비디오 입력으로 분석한다.
-2. **선별:** 등장/사라짐, 행동, 상호작용, 상태 변화, 불확실한 후보를 남긴다. 같은 상태가 유지되는 단순 `ongoing` 관찰만 제외한다.
-3. **재분석:** 중복 후보를 먼저 묶고 전후 1초를 포함해 4fps로 분석한다. 긴 후보 구간은 최대 5초 입력으로 나누고 기본 1초를 겹친다. 정상 재분석에서 지지되지 않는 후보는 최종 이벤트에서 제외되지만 `candidates.json`과 원문은 보존한다. 재분석 자체가 오류로 실패하면 해당 구간의 1차 후보를 불확실한 결과로 남긴다.
-4. **대상 ID와 타임라인:** 대상이 보이는 프레임을 이미지로 다시 검사해 정확한 위치를 구한 뒤 대표 이미지를 잘라 저장한다. 이 이미지와 외형을 비교해 전역 `entity_0001` 등의 ID를 유지한다. 동일 원본 프레임의 겹치는 박스는 바로 연결하고, 그 외에는 Qwen에 대표 이미지들을 함께 입력해 비교한다. 장면이 바뀌거나 오랫동안 나오지 않았던 대상도 기존 목록 전체를 페이지별로 비교한다. 확정되지 않은 연결은 `provisional`과 `possible_matches`로 저장하고 마지막에 다시 연결을 시도한다.
-
-동일 윈도우에서 별개로 추출된 행동은 병합하지 않는다. 겹치는 윈도우의 동일 대상·행동·시간 구간은 병합한다. 카메라 이동으로 화면에 보이기 시작한 것과 실제 입장 행동을 구분하도록 지시하며, 컷 전환 시간도 기록한다.
-
-대표 프레임에서 대상을 찾지 못하면 빈 검출 결과를 허용하고, 같은 윈도우의 다른 샘플 프레임에서 미검출 대상만 다시 찾는다. 끝까지 위치를 확인하지 못한 대상의 이미지는 임의로 자르지 않는다. 관련 이벤트는 `uncertain: true`, `identity_status: unresolved`, `unresolved_local_ids`와 함께 보존하며, 타임라인에도 대상 위치 미확인을 표시한다. 원래 대상 설명은 `windows/`의 분석 JSON에 남는다. 잘못된 ID·중복 ID·유효하지 않은 bbox 검증은 계속 적용한다.
-
-디코더의 실제 프레임 PTS를 보존한다. 모델에는 윈도우 상대 시간을 전달하고 결과를 원본 영상 기준 초로 변환한다. 직접 샘플링한 프레임을 전처리기가 다시 샘플링하지 않도록 설정했다.
-
-## 결과 확인
-
-기본 결과 폴더는 `outputs/<영상 파일 이름>/`이다.
-
-| 파일 | 내용 |
+| Directory | Purpose |
 | --- | --- |
-| `timeline.html` | 원본 영상, 이벤트 검색, 대상 필터, 시간 이동 버튼, 근거 이미지 |
-| `viewer.html` | `visualize.sh`로 생성하는 이벤트 타임라인·영상 이동·객체 박스 리뷰 화면 |
-| `timeline.json` | 최종 이벤트·대상 목록·컷 전환·영상/설정 정보 |
-| `events.csv` | 스프레드시트에서 열 수 있는 이벤트 표, UTF-8 BOM |
-| `entities.json` | 대상별 ID·종류·대표 이미지·관찰 기록·연결 근거 |
-| `candidates.json` | 중복 병합 후 1차 이벤트 후보 |
-| `refinement_plan.json` | 4fps 재분석 대상 구간 |
-| `windows/` | 윈도우별 추출 결과와 실제 샘플 시간 |
-| `frames/`, `entities/` | 근거 프레임과 대상 crop 이미지 |
-| `model_calls/` | 모델에 전달한 프롬프트, 응답 원문, 검증 오류 |
-| `checkpoint.json`, `manifest.json` | 이어하기 상태와 입력 파일/설정 서명 |
-| `analysis_errors.json` | 실패한 구간·단계·오류 내용과 계속 진행한 방식 |
-| `run.log` | 실행 진행 상황 |
+| `00_prototype/` | Qwen3-VL event extraction prototype |
+| `01_low_freq_event/` | Low-frequency event detection |
+| `02_shot_boundary_detection/` | Shot boundary detection |
+| `03_adaptive_sampling/` | Motion-aware adaptive frame sampling |
+| `04_entity_extraction/` | Entity tracking, identity linking, and story summaries |
 
-`timeline.html`을 브라우저로 열면 된다. 원본 영상은 상대 경로로 참조하므로 원본을 이동하면 재생 링크도 변경해야 한다. 브라우저가 지원하지 않는 원본 코덱은 별도 변환이 필요하다. 근거 이미지는 결과 폴더에 저장되어 있다.
+## Start after cloning
 
-### 이벤트·타임라인·객체 박스 리뷰 화면
-
-분석이 끝난 후 다음 명령으로 별도 리뷰 HTML을 생성한다. 가상환경은 자동으로 사용한다. **저장된 JSON만 읽으며, 모델 로딩·영상 재분석·GPU 사용은 없다.** 기존 분석 결과와 실행 중인 분석은 변경하지 않는다.
+Choose a stage and follow its README. For example:
 
 ```bash
-# Sintel 분석 완료 후 실행
-./visualize.sh outputs/sintel
-# 생성 파일: outputs/sintel/viewer.html — 브라우저에서 열기
-
-# 다른 위치에 저장하거나 원본 영상이 이동했을 때
-./visualize.sh outputs/sintel --output outputs/review/index.html --video videos/sintel_trailer_1080p.mp4
+cd 03_adaptive_sampling
+./setup.sh
+./run.sh --help
 ```
 
-- **이벤트 목록:** 설명, 시간, 행동 주체·대상을 표시한다. 클릭하면 원본 영상을 이벤트 시작 시점으로 이동하고 일시정지한다. 검색·대상·종류·확인 필요 여부로 필터링할 수 있다.
-- **동영상 타임라인:** 이벤트 구간을 색상 막대로 표시한다. 겹치는 이벤트는 별도 행에 배치한다. 시간 슬라이더, 현재 재생 위치, 장면 전환 표시가 있고, `선택 구간 재생`은 이벤트 종료 시점에서 멈춘다.
-- **상세 화면:** 이벤트 설명, 전후 상태, 전역 entity ID, 대표 이미지, 분석 오류·불확실성을 표시한다.
-- **객체 박스:** `entities[].observations`의 시간·bbox를 사용한다. 선택 이벤트의 행동 주체와 대상 박스를 해당 관찰 프레임에 표시한다. 영상은 원본 해상도, 근거 이미지는 저장 해상도에 맞춰 0~1000 좌표를 비례 변환한다.
-- **근거 프레임:** 저장된 이미지 위에 박스를 겹쳐 보여준다. 썸네일 클릭 시 영상도 그 시점으로 이동한다. 파란 밑줄과 `박스 프레임` 버튼으로 위치가 기록된 프레임을 찾아볼 수 있다.
+The setup scripts create stage-local virtual environments. They may download Python packages and model weights. Large downloaded media and generated output directories are kept out of Git; small intermediate inputs and fixtures that help resume or inspect a stage may be tracked. Results are written under each stage's `outputs/` directory.
 
-박스는 모든 프레임의 추적 결과가 아니라 **대표 프레임의 관찰 기록**이다. 위치가 없는 시간에는 박스를 표시하지 않으며, 프레임 사이를 보간하지 않는다. 이벤트를 선택했을 때 영상은 이벤트 시작으로 이동하고, 상세 화면은 구간 내 박스가 있는 첫 근거 프레임을 우선 보여준다. 두 화면의 시각은 각각 표시한다. 같은 시각에 여러 윈도우가 서로 다른 박스를 기록했다면 모두 표시한다.
-
-`viewer.html`은 외부 서비스·CDN·웹서버 없이 열 수 있다. JSON과 화면 코드는 HTML에 포함되며 영상·근거 이미지 파일은 상대 경로로 연결된다. 따라서 HTML만 다른 컴퓨터로 복사하면 영상과 이미지까지 포함되지는 않는다. 브라우저에서 영상 연결이 실패하면 `원본 영상 선택`으로 같은 영상을 직접 지정할 수 있다. 분석 중이거나 중단된 체크포인트는 최종 결과와 혼동하지 않도록 완료 후 실행하라는 메시지를 표시한다.
-
-### 원격 서버의 결과를 내 PC에서 보기
-
-원격 서버의 프로젝트 폴더에서 아래 명령 하나로 뷰어 서버를 켠다. 가상환경은 자동 적용되며 GPU를 사용하지 않는다.
-
-```bash
-./visualize.sh
-```
-
-**같은 공유기에 연결된 다른 PC**에서는 시작 로그에 출력되는 `http://서버내부IP:5000`을 크롬으로 연다. 이 환경에서 확인한 주소는 **http://192.168.0.106:5000**이다. DHCP로 IP가 바뀌면 시작 로그의 주소를 사용한다. Sintel 결과가 바로 표시되며 별도 SSH 포워딩은 필요 없다.
-
-`localhost`는 브라우저를 실행하는 PC 자신을 뜻한다. 분석 서버 자체에서 브라우저를 열 때만 `http://localhost:5000`을 사용한다. `Ctrl+C`로 서버를 종료하며, 스크립트를 실행할 때만 서버가 시작된다. 변경 전부터 켜져 있던 서버는 `Ctrl+C` 후 `./visualize.sh`로 다시 실행해야 같은 네트워크의 PC에서 접속할 수 있다.
-
-HTML을 아직 만들지 않았다면 먼저 `./visualize.sh outputs/sintel`을 실행한다. 기본 화면은 Sintel 결과이며, 없으면 저장된 다른 `viewer.html` 중 최신 결과를 연다. 다른 포트가 필요하면 `./visualize.sh serve --port 5001`로 지정할 수 있다. 동영상 시간 이동을 위한 HTTP byte range를 지원한다.
-
-서로 다른 네트워크에서 SSH 터널로 접속하려면 서버를 `./visualize.sh serve --host 127.0.0.1`로 켜고, **로컬 PC의 새 터미널**에서 아래 명령을 실행한다. 이 경우 로컬 브라우저 주소는 `http://localhost:5000`이다. `사용자@서버주소`는 평소 접속하는 SSH 대상이나 SSH config 별칭으로 바꾼다.
-
-```bash
-ssh -N -L 5000:127.0.0.1:5000 사용자@서버주소
-```
-
-기본 서버는 `0.0.0.0:5000`에서 접속을 받고 영상과 이미지를 제공한다. 서버나 포워딩을 종료해도 분석 작업에는 영향이 없다.
-
-### 저장된 1차 분석만 보기
-
-```bash
-# 저장된 1차 후보로 HTML을 만들고 5001번 서버 실행
-./first_round_visualize.sh
-# 같은 공유기의 다른 PC: http://192.168.0.106:5001
-
-# 다른 결과 폴더 지정
-./first_round_visualize.sh outputs/example
-
-# 서버를 켜지 않고 HTML만 생성
-./first_round_visualize.sh --generate-only
-```
-
-기본 입력은 `outputs/sintel`, 생성 파일은 `outputs/sintel/first_round.html`이다. 포트 5001은 기존 최종 결과 서버의 5000과 구분된다. `--port 5002` 등으로 변경할 수 있고 `Ctrl+C`로 종료한다. 원본 영상이 이동했으면 `--video`로 새 경로를 지정한다. `--output`으로 HTML을 다른 곳에 저장할 수 있지만 서버에서 열 페이지는 프로젝트 폴더 안에 있어야 한다. 외부 경로에 HTML만 저장하려면 `--generate-only`를 사용한다.
-
-**모델 호출·GPU 사용·영상 디코딩 없이 저장된 기록만 읽는다.** 이벤트는 `candidates.json`의 1차 병합 후보를 그대로 사용한다. Sintel의 경우 52개이며, 이 중 20개가 23초 이전에 시작한다. 최종 9개 이벤트나 정밀 분석의 빈 이벤트 배열을 사용하지 않는다. 1차 후보가 저장되어 있다면 정밀 분석이 완료되기 전에도 생성할 수 있다.
-
-박스는 `windows/coarse_*.entities.json`의 시간·위치와 일치하는 저장 관찰만 사용한다. `checkpoint.json`의 관찰에 남은 crop 경로에서 당시 대상 ID를 복원하므로 최종 ID 병합을 적용하지 않는다. 원래 ID를 확인할 수 없는 박스는 임의로 연결하지 않는다. 대표 이미지는 이 1차 관찰에서 선택하고, 오류·장면 전환도 1차 기록만 표시한다. 최종 분석 파일은 수정하지 않는다.
-
-화면 상단에는 **1차 분석 후보 · 미검증**이라고 표시한다. 이는 기존 1차 출력을 확인하는 화면이며, 잘못된 설명·시간·ID를 새로 검증하거나 수정한 결과는 아니다.
-
-이벤트 예시:
-
-```json
-{
-  "event_id": "event_00001",
-  "event_type": "interaction",
-  "start_sec": 12.5,
-  "end_sec": 13.5,
-  "actor_id": "entity_0001",
-  "object_id": "entity_0002",
-  "action": "pick_up",
-  "description": "붉은 망토의 캐릭터가 검을 오른손으로 집어 든다",
-  "state_before": "검이 바닥에 있음",
-  "state_after": "검을 들고 있음",
-  "evidence_times_sec": [12.5, 13.0, 13.5]
-}
-```
-
-`kind`는 `person`, `character`, `animal`, `object`, `other` 중 하나다. `label`은 표시용 설명이며, 동일성 연결에는 전역 ID와 실제 이미지 비교를 사용한다. 이벤트의 `continues_before/after`는 입력 구간 밖으로 행동이 이어지는 경우다. 시간·ID가 확정되지 않은 내용은 `uncertain`이나 대상의 `identity_status`로 남는다.
-
-## 설정과 이어하기
-
-```bash
-cp config.example.json config.json
-./run.sh analyze video.mp4 --config config.json --output outputs/custom
-
-# 짧은 실행 점검: 앞 10초만 분석 (전체 분석과 다른 결과 폴더 사용)
-./run.sh analyze video.mp4 --limit-seconds 10 --output outputs/preview
-```
-
-`max_pixels`는 샘플 프레임당 최대 픽셀 수, `reference_pixels`는 동일성 비교 이미지의 픽셀 수다. 더 큰 해상도가 필요하면 `config.json`에서 조정할 수 있다. `max_new_tokens`는 한 번의 이벤트 추출 응답 길이를 제어한다. 기본 모델은 `model_revision`의 Hugging Face commit SHA로 고정되어 있다. 다른 모델을 사용하려면 ID와 revision을 함께 변경한다.
-
-중단한 뒤 **같은 명령**을 다시 실행하면 마지막으로 완료된 구간부터 이어진다. 입력 파일 SHA-256, 설정, 분석 길이가 달라지면 기존 결과를 섞지 않고 새 `--output` 폴더를 요구한다. 같은 출력 폴더에 두 프로세스가 동시에 쓰는 것도 방지한다.
-
-기본값은 **분석 중 오류가 발생해도 기록하고 계속 진행**하는 방식이다.
-
-- 모델의 JSON·필수 필드·시간·ID 검증은 기본 1회 재시도한다. 그래도 영상 분석에 실패하면 해당 윈도우를 건너뛰고 다음 윈도우를 처리한다. 디코딩 오류나 CUDA 메모리 부족도 기록하고, 사용하지 않는 GPU 메모리를 정리한 뒤 다음 작업을 시도한다.
-- 위치 검출이나 대상 ID 연결만 실패하면 이미 추출한 이벤트를 대상 미확인 상태로 보존한다. 도중에 추가한 불완전한 ID 목록은 원복한다.
-- 4fps 재분석이 실패하면 그 구간과 겹치는 1차 후보를 `stage: coarse`, `uncertain: true`, `review_reason: refinement_failed`로 최종 결과에 보존한다. 이 후보는 정상 2차 이벤트와 합치지 않아 같은 사건이 중복 표시될 수 있다.
-- 마지막 대상 ID 재검토가 실패해도 기존 ID로 결과 파일을 생성한다.
-- 실패한 윈도우도 체크포인트의 진행 위치를 앞으로 이동시킨다. 같은 명령으로 재개할 때 이미 건너뛴 윈도우를 다시 반복하지 않는다.
-
-실패 내역은 `analysis_errors.json`과 `timeline.json`의 `analysis_errors`에 남고, HTML에도 분석 실패 구간과 1차 후보 보존 여부를 표시한다. 오류가 있으면 최종 `video.analysis_status`는 `complete_with_errors`다. 모든 구간이 실패해 이벤트가 0개여도 실패 기록은 보존한다. 입력 파일을 열 수 없는 경우, 설정/출력 경로 문제, 결과를 저장할 공간이 없는 경우처럼 실행·저장 자체가 불가능한 오류와 사용자의 `Ctrl+C` 중단은 별개다.
-
-디버깅할 때만 `--fail-fast`를 추가하면 첫 오류에서 중단한다. 일반 실행에는 이 옵션을 사용하지 않는다.
-
-## 점검
-
-```bash
-./run.sh test
-./run.sh make-demo --output outputs/demo.mp4 --duration 6
-./run.sh analyze outputs/demo.mp4 --output outputs/demo-result
-```
-
-테스트는 모델을 다운로드하지 않고 샘플링, 시간 전달, 이벤트 병합, 반복 행동 보존, ID 유지, 빈 검출·잘못된 ID 처리, 대체 대표 프레임 선택, 대상 미확인 이벤트 보존, 모델·디코딩·GPU·대상 연결 오류 후 계속 진행, 정밀 분석 실패 시 1차 후보 보존, 결과 생성, 중단 후 재개, 다른 디렉터리/시스템 Python에서 자동 가상환경 전환을 검증한다. 테스트용 모델 대역은 테스트 안에서만 사용한다. `analyze` 명령은 항상 실제 Qwen 모델을 사용한다.
-
-합성 데모는 실행 검증용으로 그린 캐릭터 영상이다. 실제 추론 점검 결과는 이 작업 환경의 `outputs/verified-final/`에 저장한다.
-
-이 환경에서 테스트 9개를 통과했다. RTX 3070 8GB에서 6초 합성 영상의 후보 추출 2구간과 재분석 2구간을 실제 모델로 실행해 `pick_up` 이벤트 1개를 저장했고, 캐릭터·테이블·블록의 ID가 네 구간에 걸쳐 유지되는 것을 확인했다.
-
-참고: [Qwen3-VL 공식 저장소](https://github.com/QwenLM/Qwen3-VL), [공식 4B 모델](https://huggingface.co/Qwen/Qwen3-VL-4B-Instruct), [bitsandbytes 양자화](https://huggingface.co/docs/transformers/quantization/bitsandbytes).
+Large local-only data such as `.venv/`, `.cache/`, `outputs/`, downloaded media, and model weights is excluded by `.gitignore`.

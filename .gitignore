@@ -13,6 +13,32 @@ build/
 dist/
 .setup.lock
 
+# Local experiment artifacts, at any stage depth
+**/.venv/
+**/venv/
+**/__pycache__/
+**/.pytest_cache/
+**/.cache/
+**/outputs/
+**/presentation/output/
+**/models/
+**/*.log
+**/*.mp4
+**/*.mov
+**/*.mkv
+**/*.avi
+**/*.webm
+**/*.m4v
+**/*.wav
+**/*.mp3
+**/*.flac
+**/*.safetensors
+**/*.pt
+**/*.pth
+**/*.ckpt
+**/*.onnx
+**/*.gguf
+
 # Analysis output and local notes
 outputs/
 *.log

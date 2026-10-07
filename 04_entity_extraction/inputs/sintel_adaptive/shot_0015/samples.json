@@ -1,0 +1,142 @@
+{
+  "id": "shot_0015",
+  "source": "/home/rubis/HayeonP/video_analysis/03_adaptive_sampling/outputs/sintel_trainler_full/shots/shot_0015.mp4",
+  "source_sha256": "3a2f24185c479bb122d73b4e56c13970f362eddf8f8027a1d0fcd88506f10610",
+  "source_fps": "24",
+  "source_frames": 141,
+  "source_duration_sec": 5.875,
+  "original_start_frame": 995,
+  "original_video": "/home/rubis/HayeonP/video_analysis/02_shot_boundary_detection/videos/sintel_trailer_full.mp4",
+  "original_fps": "24",
+  "sampled_frames": 9,
+  "effective_fps": 1.5319148936170213,
+  "frame_reduction_fraction": 0.9361702127659575,
+  "output_video": "sampled.mp4",
+  "output_timing": "VFR: selected frame holds until the next sample; original duration retained",
+  "config": {
+    "analysis_width": 256,
+    "change_budget": 0.08,
+    "min_fps": 1.0,
+    "max_fps": 10.0,
+    "motion_weight": 2.0,
+    "visual_weight": 1.0,
+    "camera_weight": 0.15,
+    "smoothing_seconds": 0.12,
+    "visual_guard": 0.18,
+    "transient_guard": 0.25
+  },
+  "samples": [
+    {
+      "sample_id": 0,
+      "source_frame": 0,
+      "source_time_sec": 0.0,
+      "original_frame": 995,
+      "original_time_sec": 41.458333333333336,
+      "hold_until_frame": 6,
+      "hold_duration_sec": 0.25,
+      "image": "frames/frame_00000000.jpg",
+      "reason": "first"
+    },
+    {
+      "sample_id": 1,
+      "source_frame": 6,
+      "source_time_sec": 0.25,
+      "original_frame": 1001,
+      "original_time_sec": 41.708333333333336,
+      "hold_until_frame": 15,
+      "hold_duration_sec": 0.375,
+      "image": "frames/frame_00000006.jpg",
+      "reason": "change_budget"
+    },
+    {
+      "sample_id": 2,
+      "source_frame": 15,
+      "source_time_sec": 0.625,
+      "original_frame": 1010,
+      "original_time_sec": 42.083333333333336,
+      "hold_until_frame": 39,
+      "hold_duration_sec": 1.0,
+      "image": "frames/frame_00000015.jpg",
+      "reason": "change_budget"
+    },
+    {
+      "sample_id": 3,
+      "source_frame": 39,
+      "source_time_sec": 1.625,
+      "original_frame": 1034,
+      "original_time_sec": 43.083333333333336,
+      "hold_until_frame": 63,
+      "hold_duration_sec": 1.0,
+      "image": "frames/frame_00000039.jpg",
+      "reason": "max_interval"
+    },
+    {
+      "sample_id": 4,
+      "source_frame": 63,
+      "source_time_sec": 2.625,
+      "original_frame": 1058,
+      "original_time_sec": 44.083333333333336,
+      "hold_until_frame": 87,
+      "hold_duration_sec": 1.0,
+      "image": "frames/frame_00000063.jpg",
+      "reason": "max_interval"
+    },
+    {
+      "sample_id": 5,
+      "source_frame": 87,
+      "source_time_sec": 3.625,
+      "original_frame": 1082,
+      "original_time_sec": 45.083333333333336,
+      "hold_until_frame": 111,
+      "hold_duration_sec": 1.0,
+      "image": "frames/frame_00000087.jpg",
+      "reason": "max_interval"
+    },
+    {
+      "sample_id": 6,
+      "source_frame": 111,
+      "source_time_sec": 4.625,
+      "original_frame": 1106,
+      "original_time_sec": 46.083333333333336,
+      "hold_until_frame": 135,
+      "hold_duration_sec": 1.0,
+      "image": "frames/frame_00000111.jpg",
+      "reason": "max_interval"
+    },
+    {
+      "sample_id": 7,
+      "source_frame": 135,
+      "source_time_sec": 5.625,
+      "original_frame": 1130,
+      "original_time_sec": 47.083333333333336,
+      "hold_until_frame": 140,
+      "hold_duration_sec": 0.20833333333333334,
+      "image": "frames/frame_00000135.jpg",
+      "reason": "max_interval"
+    },
+    {
+      "sample_id": 8,
+      "source_frame": 140,
+      "source_time_sec": 5.833333333333333,
+      "original_frame": 1135,
+      "original_time_sec": 47.291666666666664,
+      "hold_until_frame": 141,
+      "hold_duration_sec": 0.041666666666666664,
+      "image": "frames/frame_00000140.jpg",
+      "reason": "last"
+    }
+  ],
+  "validation": {
+    "passed": true,
+    "decoded_frames": 9,
+    "expected_sampled_frames": 9,
+    "exact_sample_timestamps": true,
+    "video_duration_sec": 5.875,
+    "video_duration_error_sec": 0.0,
+    "container_duration_error_sec": 0.0,
+    "audio_preserved": true
+  },
+  "comparison_video": "comparison.mp4",
+  "max_hold_seconds": 1.0,
+  "processing_seconds": 3.2569569689803757
+}

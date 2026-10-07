@@ -1,0 +1,70 @@
+{
+  "detector": {
+    "model": "yolo11x.pt",
+    "imgsz": 1280,
+    "person_confidence": 0.25,
+    "object_confidence": 0.25,
+    "tile_mode": "adaptive",
+    "tile_categories": ["person"],
+    "small_target_height_ratio": 0.09,
+    "max_tiles_per_frame": 6
+  },
+  "tracking": {
+    "max_sample_gap": 3,
+    "max_time_gap_sec": 2.0,
+    "assignment_floor": 0.43,
+    "ambiguity_margin": 0.035
+  },
+  "matching": {
+    "max_batches": 5,
+    "overview_tracks": 24,
+    "max_batch_tracks": 32,
+    "final_tracks": 24,
+    "candidates": 3,
+    "all_anchors_limit": 8,
+    "max_scene_frames": 40,
+    "overview_scene_frames": 2,
+    "batch_scene_frames": 4,
+    "final_scene_frames": 2,
+    "clear_face_contradiction": 0.20,
+    "batch_face": 0.50,
+    "final_face": 0.45,
+    "batch_body": 0.90,
+    "final_body": 0.86,
+    "batch_visual": 0.90,
+    "final_visual": 0.86,
+    "batch_joint_visual": 0.66,
+    "final_joint_visual": 0.60,
+    "batch_joint_body": 0.70,
+    "final_joint_body": 0.65,
+    "batch_object": 0.78,
+    "final_object": 0.68
+  },
+  "filtering": {
+    "drop_weak_singletons": false,
+    "singleton_confidence": 0.65
+  },
+  "appearance": {
+    "off_match_threshold": 0.93,
+    "off_match_margin": 0.04
+  },
+  "visual_association": {
+    "candidates": 5,
+    "reference_tracks": 4,
+    "face": 0.55,
+    "face_joint": 0.48,
+    "joint_visual": 0.50,
+    "joint_body": 0.60,
+    "body": 0.86,
+    "visual": 0.78,
+    "object": 0.90
+  },
+  "fusion": {
+    "near_identical_iou": 0.94,
+    "near_identical_area_ratio": 0.90,
+    "near_identical_visual": 0.97,
+    "track_min_support_frames": 2,
+    "track_min_support_fraction": 0.50
+  },
+  "class_kinds": {}
+}

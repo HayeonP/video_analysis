@@ -1,0 +1,74 @@
+[
+  {
+    "case": "early_to_red_hair",
+    "expected": "same",
+    "actual": "same",
+    "passed": true,
+    "elapsed_sec": 13.775560034031514,
+    "result": {
+      "decision": "same",
+      "visual_evidence": "S003_002 and S005_001 both depict a single individual with short red hair, wearing similar attire (a tank top), and holding a weapon. The facial features, hair color, and expression are consistent across frames.",
+      "temporal_evidence": "The two targets appear in different scenes but share the same visual characteristics and are likely the same character based on their appearance and context.",
+      "positive_identity_evidence": [
+        "Both targets show a person with short red hair and a tank top, indicating they are the same individual."
+      ],
+      "contradictions": []
+    }
+  },
+  {
+    "case": "red_hair_to_middle",
+    "expected": "same",
+    "actual": "same",
+    "passed": true,
+    "elapsed_sec": 5.501380136993248,
+    "result": {
+      "decision": "same",
+      "visual_evidence": "두 캐릭터 모두 붉은 머리를 가지고 있으며, 얼굴의 특징(눈, 코, 입, 피부 텍스처)과 표정이 유사하게 표현되어 있어 동일한 인물을 나타내는 것으로 보임.",
+      "temporal_evidence": "S005_001과 S011_001은 서로 다른 시점에서 촬영된 장면이지만, 두 캐릭터의 외모와 행동 패턴이 일관되게 나타나며, 시각적 연속성과 일치성을 보임.",
+      "positive_identity_evidence": [
+        "두 캐릭터 모두 붉은 머리와 비슷한 피부 텍스처를 가짐",
+        "두 캐릭터 모두 놀라움이나 감정 변화를 표현하는 표정을 보임",
+        "두 캐릭터 모두 같은 환경(예: 날씨, 배경)에서 등장함"
+      ],
+      "contradictions": []
+    }
+  },
+  {
+    "case": "red_hair_to_late",
+    "expected": "same",
+    "actual": "same",
+    "passed": true,
+    "elapsed_sec": 10.409667992964387,
+    "result": {
+      "decision": "same",
+      "visual_evidence": "S005_001 and S015_001 both refer to the same female character with short red hair, as seen in multiple frames. The character's appearance, including her red hair and facial features, remains consistent across these frames, even though some frames show her in different environments or with different expressions.",
+      "temporal_evidence": "The character appears in both S005_001 and S015_001, indicating she is the same individual throughout the sequence.",
+      "positive_identity_evidence": [
+        "Both S005_001 and S015_001 depict a female character with short red hair."
+      ],
+      "contradictions": []
+    }
+  },
+  {
+    "case": "older_man_vs_woman",
+    "expected": "different",
+    "actual": "different",
+    "passed": true,
+    "elapsed_sec": 5.801913019968197,
+    "result": {
+      "decision": "different",
+      "visual_evidence": "두 인물은 서로 다른 성별, 피부색, 머리색, 옷차림, 그리고 얼굴 특징을 가지고 있으며, 각각의 캐릭터는 독립된 시점에서 등장합니다.",
+      "temporal_evidence": "S004_001은 shot_0004에서만 등장하고, S005_001은 shot_0005에서만 등장하며, 두 캐릭터는 서로 다른 시간대에 등장합니다.",
+      "positive_identity_evidence": [],
+      "contradictions": [
+        {
+          "frame_a": "shot_0004_f00000027",
+          "frame_b": "shot_0005_f00000000",
+          "trait": "incompatible_face",
+          "evidence_a": "남성 캐릭터의 얼굴은 흰색 수염과 눈 위에 나선형 장식이 있는 모습입니다.",
+          "evidence_b": "여성 캐릭터의 얼굴은 붉은 머리와 어깨에 문양이 있는 상의를 입고 있는 모습입니다."
+        }
+      ]
+    }
+  }
+]

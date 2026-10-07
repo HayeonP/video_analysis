@@ -1,0 +1,76 @@
+{
+  "id": "shot_0016",
+  "source": "/home/rubis/HayeonP/video_analysis/03_adaptive_sampling/outputs/sintel_trainler_full/shots/shot_0016.mp4",
+  "source_sha256": "117accaa1334091f22a2e0bf6d563aa3f28fd53705f59365f7e28ea255d0916d",
+  "source_fps": "24",
+  "source_frames": 27,
+  "source_duration_sec": 1.125,
+  "original_start_frame": 1136,
+  "original_video": "/home/rubis/HayeonP/video_analysis/02_shot_boundary_detection/videos/sintel_trailer_full.mp4",
+  "original_fps": "24",
+  "sampled_frames": 3,
+  "effective_fps": 2.6666666666666665,
+  "frame_reduction_fraction": 0.8888888888888888,
+  "output_video": "sampled.mp4",
+  "output_timing": "VFR: selected frame holds until the next sample; original duration retained",
+  "config": {
+    "analysis_width": 256,
+    "change_budget": 0.08,
+    "min_fps": 1.0,
+    "max_fps": 10.0,
+    "motion_weight": 2.0,
+    "visual_weight": 1.0,
+    "camera_weight": 0.15,
+    "smoothing_seconds": 0.12,
+    "visual_guard": 0.18,
+    "transient_guard": 0.25
+  },
+  "samples": [
+    {
+      "sample_id": 0,
+      "source_frame": 0,
+      "source_time_sec": 0.0,
+      "original_frame": 1136,
+      "original_time_sec": 47.333333333333336,
+      "hold_until_frame": 24,
+      "hold_duration_sec": 1.0,
+      "image": "frames/frame_00000000.jpg",
+      "reason": "first"
+    },
+    {
+      "sample_id": 1,
+      "source_frame": 24,
+      "source_time_sec": 1.0,
+      "original_frame": 1160,
+      "original_time_sec": 48.333333333333336,
+      "hold_until_frame": 26,
+      "hold_duration_sec": 0.08333333333333333,
+      "image": "frames/frame_00000024.jpg",
+      "reason": "max_interval"
+    },
+    {
+      "sample_id": 2,
+      "source_frame": 26,
+      "source_time_sec": 1.0833333333333333,
+      "original_frame": 1162,
+      "original_time_sec": 48.416666666666664,
+      "hold_until_frame": 27,
+      "hold_duration_sec": 0.041666666666666664,
+      "image": "frames/frame_00000026.jpg",
+      "reason": "last"
+    }
+  ],
+  "validation": {
+    "passed": true,
+    "decoded_frames": 3,
+    "expected_sampled_frames": 3,
+    "exact_sample_timestamps": true,
+    "video_duration_sec": 1.125,
+    "video_duration_error_sec": 0.0,
+    "container_duration_error_sec": 0.0,
+    "audio_preserved": true
+  },
+  "comparison_video": "comparison.mp4",
+  "max_hold_seconds": 1.0,
+  "processing_seconds": 0.6822857889928855
+}

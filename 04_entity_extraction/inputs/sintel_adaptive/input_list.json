@@ -1,0 +1,123 @@
+{
+  "videos": [
+    {
+      "id": "shot_0001",
+      "path": "/home/rubis/HayeonP/video_analysis/03_adaptive_sampling/outputs/sintel_trainler_full/shots/shot_0001.mp4",
+      "original_start_frame": 0,
+      "original_fps": "24",
+      "original_video": "/home/rubis/HayeonP/video_analysis/02_shot_boundary_detection/videos/sintel_trailer_full.mp4"
+    },
+    {
+      "id": "shot_0002",
+      "path": "/home/rubis/HayeonP/video_analysis/03_adaptive_sampling/outputs/sintel_trainler_full/shots/shot_0002.mp4",
+      "original_start_frame": 122,
+      "original_fps": "24",
+      "original_video": "/home/rubis/HayeonP/video_analysis/02_shot_boundary_detection/videos/sintel_trailer_full.mp4"
+    },
+    {
+      "id": "shot_0003",
+      "path": "/home/rubis/HayeonP/video_analysis/03_adaptive_sampling/outputs/sintel_trainler_full/shots/shot_0003.mp4",
+      "original_start_frame": 209,
+      "original_fps": "24",
+      "original_video": "/home/rubis/HayeonP/video_analysis/02_shot_boundary_detection/videos/sintel_trailer_full.mp4"
+    },
+    {
+      "id": "shot_0004",
+      "path": "/home/rubis/HayeonP/video_analysis/03_adaptive_sampling/outputs/sintel_trainler_full/shots/shot_0004.mp4",
+      "original_start_frame": 288,
+      "original_fps": "24",
+      "original_video": "/home/rubis/HayeonP/video_analysis/02_shot_boundary_detection/videos/sintel_trailer_full.mp4"
+    },
+    {
+      "id": "shot_0005",
+      "path": "/home/rubis/HayeonP/video_analysis/03_adaptive_sampling/outputs/sintel_trainler_full/shots/shot_0005.mp4",
+      "original_start_frame": 334,
+      "original_fps": "24",
+      "original_video": "/home/rubis/HayeonP/video_analysis/02_shot_boundary_detection/videos/sintel_trailer_full.mp4"
+    },
+    {
+      "id": "shot_0006",
+      "path": "/home/rubis/HayeonP/video_analysis/03_adaptive_sampling/outputs/sintel_trainler_full/shots/shot_0006.mp4",
+      "original_start_frame": 391,
+      "original_fps": "24",
+      "original_video": "/home/rubis/HayeonP/video_analysis/02_shot_boundary_detection/videos/sintel_trailer_full.mp4"
+    },
+    {
+      "id": "shot_0007",
+      "path": "/home/rubis/HayeonP/video_analysis/03_adaptive_sampling/outputs/sintel_trainler_full/shots/shot_0007.mp4",
+      "original_start_frame": 442,
+      "original_fps": "24",
+      "original_video": "/home/rubis/HayeonP/video_analysis/02_shot_boundary_detection/videos/sintel_trailer_full.mp4"
+    },
+    {
+      "id": "shot_0008",
+      "path": "/home/rubis/HayeonP/video_analysis/03_adaptive_sampling/outputs/sintel_trainler_full/shots/shot_0008.mp4",
+      "original_start_frame": 521,
+      "original_fps": "24",
+      "original_video": "/home/rubis/HayeonP/video_analysis/02_shot_boundary_detection/videos/sintel_trailer_full.mp4"
+    },
+    {
+      "id": "shot_0009",
+      "path": "/home/rubis/HayeonP/video_analysis/03_adaptive_sampling/outputs/sintel_trainler_full/shots/shot_0009.mp4",
+      "original_start_frame": 571,
+      "original_fps": "24",
+      "original_video": "/home/rubis/HayeonP/video_analysis/02_shot_boundary_detection/videos/sintel_trailer_full.mp4"
+    },
+    {
+      "id": "shot_0010",
+      "path": "/home/rubis/HayeonP/video_analysis/03_adaptive_sampling/outputs/sintel_trainler_full/shots/shot_0010.mp4",
+      "original_start_frame": 621,
+      "original_fps": "24",
+      "original_video": "/home/rubis/HayeonP/video_analysis/02_shot_boundary_detection/videos/sintel_trailer_full.mp4"
+    },
+    {
+      "id": "shot_0011",
+      "path": "/home/rubis/HayeonP/video_analysis/03_adaptive_sampling/outputs/sintel_trainler_full/shots/shot_0011.mp4",
+      "original_start_frame": 658,
+      "original_fps": "24",
+      "original_video": "/home/rubis/HayeonP/video_analysis/02_shot_boundary_detection/videos/sintel_trailer_full.mp4"
+    },
+    {
+      "id": "shot_0012",
+      "path": "/home/rubis/HayeonP/video_analysis/03_adaptive_sampling/outputs/sintel_trainler_full/shots/shot_0012.mp4",
+      "original_start_frame": 686,
+      "original_fps": "24",
+      "original_video": "/home/rubis/HayeonP/video_analysis/02_shot_boundary_detection/videos/sintel_trailer_full.mp4"
+    },
+    {
+      "id": "shot_0013",
+      "path": "/home/rubis/HayeonP/video_analysis/03_adaptive_sampling/outputs/sintel_trainler_full/shots/shot_0013.mp4",
+      "original_start_frame": 774,
+      "original_fps": "24",
+      "original_video": "/home/rubis/HayeonP/video_analysis/02_shot_boundary_detection/videos/sintel_trailer_full.mp4"
+    },
+    {
+      "id": "shot_0014",
+      "path": "/home/rubis/HayeonP/video_analysis/03_adaptive_sampling/outputs/sintel_trainler_full/shots/shot_0014.mp4",
+      "original_start_frame": 845,
+      "original_fps": "24",
+      "original_video": "/home/rubis/HayeonP/video_analysis/02_shot_boundary_detection/videos/sintel_trailer_full.mp4"
+    },
+    {
+      "id": "shot_0015",
+      "path": "/home/rubis/HayeonP/video_analysis/03_adaptive_sampling/outputs/sintel_trainler_full/shots/shot_0015.mp4",
+      "original_start_frame": 995,
+      "original_fps": "24",
+      "original_video": "/home/rubis/HayeonP/video_analysis/02_shot_boundary_detection/videos/sintel_trailer_full.mp4"
+    },
+    {
+      "id": "shot_0016",
+      "path": "/home/rubis/HayeonP/video_analysis/03_adaptive_sampling/outputs/sintel_trainler_full/shots/shot_0016.mp4",
+      "original_start_frame": 1136,
+      "original_fps": "24",
+      "original_video": "/home/rubis/HayeonP/video_analysis/02_shot_boundary_detection/videos/sintel_trailer_full.mp4"
+    },
+    {
+      "id": "shot_0017",
+      "path": "/home/rubis/HayeonP/video_analysis/03_adaptive_sampling/outputs/sintel_trainler_full/shots/shot_0017.mp4",
+      "original_start_frame": 1163,
+      "original_fps": "24",
+      "original_video": "/home/rubis/HayeonP/video_analysis/02_shot_boundary_detection/videos/sintel_trailer_full.mp4"
+    }
+  ]
+}

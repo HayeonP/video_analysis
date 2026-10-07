@@ -1,0 +1,199 @@
+{
+  "video": "comparison_full.mp4",
+  "order": "summary.json videos order",
+  "duration_sec": 52.208333333333336,
+  "fps": "24",
+  "frames": 1253,
+  "audio": false,
+  "reencoded": false,
+  "exact_contiguous_timestamps": true,
+  "segments": [
+    {
+      "id": "shot_0001",
+      "comparison": "shot_0001/comparison.mp4",
+      "start_frame": 0,
+      "end_frame": 122,
+      "start_sec": 0.0,
+      "end_sec": 5.083333333333333,
+      "original_video": "/home/rubis/HayeonP/video_analysis/02_shot_boundary_detection/videos/sintel_trailer_full.mp4",
+      "original_start_frame": 0,
+      "original_fps": "24"
+    },
+    {
+      "id": "shot_0002",
+      "comparison": "shot_0002/comparison.mp4",
+      "start_frame": 122,
+      "end_frame": 209,
+      "start_sec": 5.083333333333333,
+      "end_sec": 8.708333333333334,
+      "original_video": "/home/rubis/HayeonP/video_analysis/02_shot_boundary_detection/videos/sintel_trailer_full.mp4",
+      "original_start_frame": 122,
+      "original_fps": "24"
+    },
+    {
+      "id": "shot_0003",
+      "comparison": "shot_0003/comparison.mp4",
+      "start_frame": 209,
+      "end_frame": 288,
+      "start_sec": 8.708333333333334,
+      "end_sec": 12.0,
+      "original_video": "/home/rubis/HayeonP/video_analysis/02_shot_boundary_detection/videos/sintel_trailer_full.mp4",
+      "original_start_frame": 209,
+      "original_fps": "24"
+    },
+    {
+      "id": "shot_0004",
+      "comparison": "shot_0004/comparison.mp4",
+      "start_frame": 288,
+      "end_frame": 334,
+      "start_sec": 12.0,
+      "end_sec": 13.916666666666666,
+      "original_video": "/home/rubis/HayeonP/video_analysis/02_shot_boundary_detection/videos/sintel_trailer_full.mp4",
+      "original_start_frame": 288,
+      "original_fps": "24"
+    },
+    {
+      "id": "shot_0005",
+      "comparison": "shot_0005/comparison.mp4",
+      "start_frame": 334,
+      "end_frame": 391,
+      "start_sec": 13.916666666666666,
+      "end_sec": 16.291666666666668,
+      "original_video": "/home/rubis/HayeonP/video_analysis/02_shot_boundary_detection/videos/sintel_trailer_full.mp4",
+      "original_start_frame": 334,
+      "original_fps": "24"
+    },
+    {
+      "id": "shot_0006",
+      "comparison": "shot_0006/comparison.mp4",
+      "start_frame": 391,
+      "end_frame": 442,
+      "start_sec": 16.291666666666668,
+      "end_sec": 18.416666666666668,
+      "original_video": "/home/rubis/HayeonP/video_analysis/02_shot_boundary_detection/videos/sintel_trailer_full.mp4",
+      "original_start_frame": 391,
+      "original_fps": "24"
+    },
+    {
+      "id": "shot_0007",
+      "comparison": "shot_0007/comparison.mp4",
+      "start_frame": 442,
+      "end_frame": 521,
+      "start_sec": 18.416666666666668,
+      "end_sec": 21.708333333333332,
+      "original_video": "/home/rubis/HayeonP/video_analysis/02_shot_boundary_detection/videos/sintel_trailer_full.mp4",
+      "original_start_frame": 442,
+      "original_fps": "24"
+    },
+    {
+      "id": "shot_0008",
+      "comparison": "shot_0008/comparison.mp4",
+      "start_frame": 521,
+      "end_frame": 571,
+      "start_sec": 21.708333333333332,
+      "end_sec": 23.791666666666668,
+      "original_video": "/home/rubis/HayeonP/video_analysis/02_shot_boundary_detection/videos/sintel_trailer_full.mp4",
+      "original_start_frame": 521,
+      "original_fps": "24"
+    },
+    {
+      "id": "shot_0009",
+      "comparison": "shot_0009/comparison.mp4",
+      "start_frame": 571,
+      "end_frame": 621,
+      "start_sec": 23.791666666666668,
+      "end_sec": 25.875,
+      "original_video": "/home/rubis/HayeonP/video_analysis/02_shot_boundary_detection/videos/sintel_trailer_full.mp4",
+      "original_start_frame": 571,
+      "original_fps": "24"
+    },
+    {
+      "id": "shot_0010",
+      "comparison": "shot_0010/comparison.mp4",
+      "start_frame": 621,
+      "end_frame": 658,
+      "start_sec": 25.875,
+      "end_sec": 27.416666666666668,
+      "original_video": "/home/rubis/HayeonP/video_analysis/02_shot_boundary_detection/videos/sintel_trailer_full.mp4",
+      "original_start_frame": 621,
+      "original_fps": "24"
+    },
+    {
+      "id": "shot_0011",
+      "comparison": "shot_0011/comparison.mp4",
+      "start_frame": 658,
+      "end_frame": 686,
+      "start_sec": 27.416666666666668,
+      "end_sec": 28.583333333333332,
+      "original_video": "/home/rubis/HayeonP/video_analysis/02_shot_boundary_detection/videos/sintel_trailer_full.mp4",
+      "original_start_frame": 658,
+      "original_fps": "24"
+    },
+    {
+      "id": "shot_0012",
+      "comparison": "shot_0012/comparison.mp4",
+      "start_frame": 686,
+      "end_frame": 774,
+      "start_sec": 28.583333333333332,
+      "end_sec": 32.25,
+      "original_video": "/home/rubis/HayeonP/video_analysis/02_shot_boundary_detection/videos/sintel_trailer_full.mp4",
+      "original_start_frame": 686,
+      "original_fps": "24"
+    },
+    {
+      "id": "shot_0013",
+      "comparison": "shot_0013/comparison.mp4",
+      "start_frame": 774,
+      "end_frame": 845,
+      "start_sec": 32.25,
+      "end_sec": 35.208333333333336,
+      "original_video": "/home/rubis/HayeonP/video_analysis/02_shot_boundary_detection/videos/sintel_trailer_full.mp4",
+      "original_start_frame": 774,
+      "original_fps": "24"
+    },
+    {
+      "id": "shot_0014",
+      "comparison": "shot_0014/comparison.mp4",
+      "start_frame": 845,
+      "end_frame": 995,
+      "start_sec": 35.208333333333336,
+      "end_sec": 41.458333333333336,
+      "original_video": "/home/rubis/HayeonP/video_analysis/02_shot_boundary_detection/videos/sintel_trailer_full.mp4",
+      "original_start_frame": 845,
+      "original_fps": "24"
+    },
+    {
+      "id": "shot_0015",
+      "comparison": "shot_0015/comparison.mp4",
+      "start_frame": 995,
+      "end_frame": 1136,
+      "start_sec": 41.458333333333336,
+      "end_sec": 47.333333333333336,
+      "original_video": "/home/rubis/HayeonP/video_analysis/02_shot_boundary_detection/videos/sintel_trailer_full.mp4",
+      "original_start_frame": 995,
+      "original_fps": "24"
+    },
+    {
+      "id": "shot_0016",
+      "comparison": "shot_0016/comparison.mp4",
+      "start_frame": 1136,
+      "end_frame": 1163,
+      "start_sec": 47.333333333333336,
+      "end_sec": 48.458333333333336,
+      "original_video": "/home/rubis/HayeonP/video_analysis/02_shot_boundary_detection/videos/sintel_trailer_full.mp4",
+      "original_start_frame": 1136,
+      "original_fps": "24"
+    },
+    {
+      "id": "shot_0017",
+      "comparison": "shot_0017/comparison.mp4",
+      "start_frame": 1163,
+      "end_frame": 1253,
+      "start_sec": 48.458333333333336,
+      "end_sec": 52.208333333333336,
+      "original_video": "/home/rubis/HayeonP/video_analysis/02_shot_boundary_detection/videos/sintel_trailer_full.mp4",
+      "original_start_frame": 1163,
+      "original_fps": "24"
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "title": "Sintel — Official Trailer (first 30 seconds)",
+  "source_url": "https://media.w3.org/2010/05/sintel/trailer_hd.mp4",
+  "project_url": "https://durian.blender.org/download/",
+  "attribution": "© Blender Foundation | durian.blender.org",
+  "license": "Creative Commons Attribution 3.0",
+  "license_url": "https://durian.blender.org/sharing/",
+  "modification": "First 30 seconds extracted; H.264/AAC re-encoded. Full trailer retained alongside sample.",
+  "source_file": "sintel_trailer_full.mp4",
+  "source_sha256": "34bbd52a4b89fdf63c8ace50b268da26653a59508288100cd3c23de276db7931",
+  "file": "sintel_trailer_30s.mp4",
+  "sha256": "395447ac25645b2a8164d793f44d7b412b0dbc5355a97531de61634e5903693a",
+  "source_start_sec": 0,
+  "duration_sec": 30.0,
+  "width": 1920,
+  "height": 1080,
+  "fps": "24/1",
+  "downloaded_at": "2026-10-06T03:10:18.696858+00:00"
+}

@@ -1,0 +1,4 @@
+scenedetect-headless==0.7.1
+opencv-python-headless==4.12.0.88
+numpy==2.2.6
+# CPU-only torch==2.7.1+cpu is installed by setup.sh from the official PyTorch index.

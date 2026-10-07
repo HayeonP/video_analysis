@@ -1,0 +1,87 @@
+{
+  "id": "shot_0005",
+  "source": "/home/rubis/HayeonP/video_analysis/03_adaptive_sampling/outputs/sintel_trainler_full/shots/shot_0005.mp4",
+  "source_sha256": "a90b171ae6766dba562ba1696472e92cf6f7d4a2e1047f150313692af0afba05",
+  "source_fps": "24",
+  "source_frames": 57,
+  "source_duration_sec": 2.375,
+  "original_start_frame": 334,
+  "original_video": "/home/rubis/HayeonP/video_analysis/02_shot_boundary_detection/videos/sintel_trailer_full.mp4",
+  "original_fps": "24",
+  "sampled_frames": 4,
+  "effective_fps": 1.6842105263157894,
+  "frame_reduction_fraction": 0.9298245614035088,
+  "output_video": "sampled.mp4",
+  "output_timing": "VFR: selected frame holds until the next sample; original duration retained",
+  "config": {
+    "analysis_width": 256,
+    "change_budget": 0.08,
+    "min_fps": 1.0,
+    "max_fps": 10.0,
+    "motion_weight": 2.0,
+    "visual_weight": 1.0,
+    "camera_weight": 0.15,
+    "smoothing_seconds": 0.12,
+    "visual_guard": 0.18,
+    "transient_guard": 0.25
+  },
+  "samples": [
+    {
+      "sample_id": 0,
+      "source_frame": 0,
+      "source_time_sec": 0.0,
+      "original_frame": 334,
+      "original_time_sec": 13.916666666666666,
+      "hold_until_frame": 23,
+      "hold_duration_sec": 0.9583333333333334,
+      "image": "frames/frame_00000000.jpg",
+      "reason": "first"
+    },
+    {
+      "sample_id": 1,
+      "source_frame": 23,
+      "source_time_sec": 0.9583333333333334,
+      "original_frame": 357,
+      "original_time_sec": 14.875,
+      "hold_until_frame": 36,
+      "hold_duration_sec": 0.5416666666666666,
+      "image": "frames/frame_00000023.jpg",
+      "reason": "change_budget"
+    },
+    {
+      "sample_id": 2,
+      "source_frame": 36,
+      "source_time_sec": 1.5,
+      "original_frame": 370,
+      "original_time_sec": 15.416666666666666,
+      "hold_until_frame": 56,
+      "hold_duration_sec": 0.8333333333333334,
+      "image": "frames/frame_00000036.jpg",
+      "reason": "change_budget"
+    },
+    {
+      "sample_id": 3,
+      "source_frame": 56,
+      "source_time_sec": 2.3333333333333335,
+      "original_frame": 390,
+      "original_time_sec": 16.25,
+      "hold_until_frame": 57,
+      "hold_duration_sec": 0.041666666666666664,
+      "image": "frames/frame_00000056.jpg",
+      "reason": "last"
+    }
+  ],
+  "validation": {
+    "passed": true,
+    "decoded_frames": 4,
+    "expected_sampled_frames": 4,
+    "exact_sample_timestamps": true,
+    "video_duration_sec": 2.375,
+    "video_duration_error_sec": 0.0,
+    "container_duration_error_sec": 0.0,
+    "audio_preserved": true
+  },
+  "comparison_video": "comparison.mp4",
+  "max_hold_seconds": 0.9583333333333334,
+  "processing_seconds": 2.124451486975886
+}

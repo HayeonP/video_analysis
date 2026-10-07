@@ -1,0 +1,265 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Entity Extraction — 과정·결과·다음 설계</title>
+<style>
+@font-face{font-family:Nanum;src:url('__FONT_DATA__') format('truetype');font-display:swap}
+:root{--paper:#f5f3ed;--ink:#142e36;--muted:#65767b;--line:#d7ddd8;--teal:#007e80;--mint:#dceee7;--orange:#b95926;--peach:#fae7d8;--white:#fffefa}
+*{box-sizing:border-box}body{margin:0;background:#132a31;color:var(--ink);font-family:Nanum,system-ui,sans-serif}button,input,textarea{font:inherit}button{cursor:pointer}a{color:var(--teal);text-underline-offset:4px}button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px solid #eaa144;outline-offset:3px}
+.toolbar{height:58px;display:flex;align-items:center;gap:10px;padding:0 24px;color:#dbe8e7;background:#10262d}.brand{font-size:13px;letter-spacing:1.6px;flex:1}.toolbar button{background:#ffffff0c;border:1px solid #ffffff2c;color:#e4edeb;border-radius:7px;padding:8px 12px;font-size:12px}.toolbar button:hover{background:#ffffff22}.toolbar .primary{background:#e3ebdf;color:#16363a}.keyhint{font-size:12px;color:#a9bdbd;margin-right:12px}
+#viewport{height:calc(100vh - 102px);height:calc(100dvh - 102px);display:flex;align-items:center;justify-content:center;overflow:hidden;padding:10px}#shell{position:relative;flex:none}#deck{width:1440px;height:810px;transform-origin:top left;background:var(--paper);box-shadow:0 18px 70px #0004}.slide{position:absolute;inset:0;width:1440px;height:810px;padding:49px 66px 58px;display:none;overflow:hidden;background:var(--paper)}.slide.active{display:block}
+.eyebrow{font-size:14px;letter-spacing:2px;font-weight:bold;color:var(--teal);display:flex;align-items:center;gap:14px;margin-bottom:18px}.badge{display:inline-block;font-size:12px;letter-spacing:.2px;background:var(--mint);color:var(--teal);border:1px solid #a8cfc5;border-radius:100px;padding:5px 11px;white-space:nowrap}.badge.plan{background:var(--peach);color:var(--orange);border-color:#e7b796}.badge.actual{background:#e5eaf2;color:#365c89;border-color:#b6c6de}
+h1,h2,h3,p{margin:0}h1{font-size:65px;line-height:1.28;letter-spacing:-2.8px}h2{font-size:43px;line-height:1.3;letter-spacing:-1.5px;margin-bottom:14px}h3{font-size:24px;line-height:1.45;letter-spacing:-.6px}.lead{font-size:21px;line-height:1.65;color:var(--muted);max-width:1200px;margin-bottom:28px}.body{font-size:21px;line-height:1.7}.small{font-size:16px;line-height:1.7;color:var(--muted)}.tiny{font-size:13px;line-height:1.6;color:var(--muted)}em{font-style:normal;color:var(--teal)}code{font-family:ui-monospace,monospace;font-size:.88em;background:#183d3d08;padding:2px 5px;border-radius:4px}pre{font-family:ui-monospace,monospace;line-height:1.8;font-size:18px;white-space:pre-wrap;overflow-wrap:anywhere;margin:0}
+.footer{position:absolute;bottom:21px;left:66px;right:66px;border-top:1px solid var(--line);padding-top:11px;display:flex;justify-content:space-between;font-size:11px;letter-spacing:1.1px;color:var(--muted)}.grid2{display:grid;grid-template-columns:1fr 1fr;gap:26px}.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:22px}.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:18px}.card{border:1px solid var(--line);border-radius:15px;padding:27px;background:var(--white)}.card h3{margin-bottom:14px}.card p+p{margin-top:14px}.card.teal{background:var(--mint);border-color:#b5d2c7}.card.orange{background:var(--peach);border-color:#e9c7ad}.card.dark{background:var(--ink);border-color:var(--ink);color:#f3f5ed}.card.dark .small,.card.dark .tiny{color:#b7cfcb}.label{font-size:13px;letter-spacing:1.1px;font-weight:bold;color:var(--muted);margin-bottom:15px}.number{font-size:62px;letter-spacing:-2px;line-height:1.15;font-weight:bold}.metric .small{margin-top:10px}.strip{padding:16px 21px;border-left:4px solid var(--teal);background:var(--mint);font-size:18px;line-height:1.6;margin-top:23px;border-radius:0 8px 8px 0}.strip.warning{border-color:var(--orange);background:var(--peach)}.bullets{padding:0;margin:15px 0 0;list-style:none}.bullets li{font-size:19px;line-height:1.6;margin:13px 0;padding-left:20px;position:relative}.bullets li:before{content:'•';position:absolute;left:0;color:var(--teal)}.plan-slide .eyebrow{color:var(--orange)}
+.flow{display:flex;align-items:stretch;gap:13px;margin:24px 0}.node{flex:1;padding:23px 18px;background:var(--white);border:1px solid var(--line);border-radius:12px;min-width:0}.arrow{align-self:center;color:var(--teal);font-size:25px}.step{font-size:13px;color:var(--teal);margin-bottom:15px;font-weight:bold;letter-spacing:1px}.node h3{font-size:22px;margin-bottom:9px}.node p{font-size:16px;line-height:1.6;color:var(--muted)}.node.accent{background:var(--mint);border-color:#a9cdc0}
+.hero{background:#102e35;color:var(--paper)}.hero .eyebrow{color:#82d0c4}.hero .footer{color:#adc4bf;border-color:#446064}.hero-layout{display:grid;grid-template-columns:1.15fr 1fr;gap:40px;margin-top:40px}.hero h1{margin-top:18px}.hero-summary{margin-top:27px;color:#c4d4ce;font-size:21px;line-height:1.7}.hero-images{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;align-items:start;padding-top:18px}.hero-image{margin:0;background:#1b3b43;border:1px solid #56706d66;border-radius:11px;overflow:hidden}.hero-image:nth-child(2){transform:translateY(36px)}.hero-image:nth-child(3){transform:translateY(72px)}.hero-image img{width:100%;height:330px;object-fit:cover;object-position:center 20%;display:block}.hero-image figcaption{padding:14px 11px;font-size:13px;color:#bdd2c9}.hero-bottom{margin-top:35px;display:flex;gap:12px}.pill{font-size:13px;border:1px solid #738e8655;border-radius:30px;padding:8px 14px}.hero-note{margin-top:70px;color:#9db9b2;font-size:14px;line-height:1.8}
+table{border-collapse:collapse;width:100%;font-size:18px}th{text-align:left;font-size:14px;color:var(--muted);padding:15px 16px;border-bottom:2px solid var(--line)}td{padding:18px 16px;border-bottom:1px solid var(--line);line-height:1.5}tr:last-child td{border-bottom:0}.formula{font-family:ui-monospace,monospace;font-size:24px;line-height:1.7;padding:22px;border:1px solid var(--line);border-radius:11px;background:#fff9;margin:20px 0}.photo{width:100%;height:275px;object-fit:contain;display:block;background:#18333a;border-radius:9px}.photo.crop{height:345px}.photo-label{display:flex;justify-content:space-between;gap:10px;align-items:center;margin-top:14px}.photo-label b{font-size:23px}.photo-label span{font-size:14px;color:var(--muted)}.mini-tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:13px}.mini-tags span{font-size:12px;background:#e9eee7;border-radius:5px;padding:5px 8px;color:var(--muted)}
+.timegrid{display:grid;grid-template-columns:110px 1fr;gap:20px;align-items:center;margin:26px 0}.ticks{display:flex;height:38px;gap:4px}.ticks span{background:#d9dfd6;flex:1;border-radius:3px}.ticks.held span{background:#159193;color:white;display:grid;place-items:center;font-size:14px}.ticks.held span:nth-child(2n){background:#68aaa0}
+.playground{display:grid;grid-template-columns:1fr 1.04fr;gap:22px}.playground .card{padding:20px}.shot-img{width:100%;height:225px;object-fit:contain;background:#102b32;border-radius:8px}.shot-controls{display:flex;align-items:center;gap:14px;margin-top:15px}.shot-controls input{flex:1;accent-color:var(--teal)}.shot-controls button{border:1px solid var(--line);background:white;border-radius:6px;width:33px;height:30px}.shot-title{font-size:19px;font-weight:bold;white-space:nowrap}.memory-count{display:flex;align-items:baseline;gap:12px;margin-bottom:16px}.memory-count b{font-size:43px}.memory-count span{font-size:15px;color:var(--muted)}.memory-chips{height:124px;overflow:auto;display:flex;align-content:flex-start;gap:6px;flex-wrap:wrap}.memory-chips span{font-size:12px;line-height:1.4;border:1px solid #bdd5ca;background:#e4efe6;border-radius:6px;padding:6px 8px}.shot-table{height:146px;overflow:auto;margin-top:13px}.shot-table td,.shot-table th{padding:7px 8px;font-size:12px}.scene-summary{font-size:13px;line-height:1.6;color:var(--muted);height:44px;overflow:auto;margin-top:11px}
+.track{display:flex;align-items:center;gap:8px;justify-content:space-between}.track span{width:52px;height:48px;display:grid;place-items:center;background:#e0eee6;border-radius:7px;font-family:monospace;font-size:17px}.track i{font-style:normal;color:var(--muted)}.track.back span{background:#e2e9f2}.bar{display:flex;height:82px;overflow:hidden;border-radius:12px;margin:24px 0}.bar>div{display:flex;flex-direction:column;align-items:center;justify-content:center;color:white;gap:7px;font-size:16px}.bar b{font-size:26px}.bar .forward{background:#537ba7;width:30.131%}.bar .both{background:#138784;width:8.297%}.bar .reverse{background:#cb7f4d;width:61.572%}
+.matrix-layout{display:grid;grid-template-columns:1fr 252px;gap:20px}.matrix-tools{display:flex;align-items:center;gap:15px;margin-bottom:11px}.matrix-tools input{padding:10px 13px;border:1px solid var(--line);background:white;border-radius:7px;width:360px;font-size:15px}.matrix-wrap{height:380px;overflow:auto;border:1px solid var(--line);border-radius:10px;background:#fffefa}.matrix{font-size:11px;table-layout:fixed;min-width:980px}.matrix th,.matrix td{padding:6px 3px;text-align:center;height:30px;font-size:11px;line-height:1.4;border-bottom:1px solid #e3e7e1}.matrix th{position:sticky;top:0;z-index:2;background:#e9eee7;height:36px}.matrix th:first-child{width:82px}.matrix th:nth-child(2){width:160px}.matrix td:nth-child(2){text-align:left;padding-left:7px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.matrix td.on{color:#007573;background:#d4e9df;font-weight:bold}.matrix td.off{color:#b8c1ba}.matrix tr.selected td{box-shadow:inset 0 2px #b7612f,inset 0 -2px #b7612f}.entity-btn{background:none;border:0;color:var(--ink);font-size:11px;text-decoration:underline}.entity-preview{height:425px;background:#e9eee7;border-radius:12px;padding:16px}.entity-preview img{width:100%;height:261px;object-fit:contain;background:#17363a;border-radius:7px}.entity-preview h3{font-size:19px;margin-top:11px}.entity-preview p{font-size:13px;line-height:1.6;margin-top:8px;color:var(--muted)}
+.artifact{display:flex;gap:18px;align-items:flex-start;padding:20px 0;border-bottom:1px solid var(--line)}.artifact:last-child{border-bottom:0}.artifact .icon{width:48px;height:48px;flex:none;display:grid;place-items:center;background:var(--mint);border-radius:10px;font-size:15px;font-weight:bold;color:var(--teal)}.artifact h3{font-size:22px}.artifact p{font-size:16px;color:var(--muted);margin-top:7px;line-height:1.5}.code-card{background:#15343b;color:#e6ede2;border-radius:15px;padding:27px}.duration-bar{height:22px;background:#d7e0d9;border-radius:20px;overflow:hidden;margin:20px 0}.duration-bar span{display:block;width:94.33%;height:100%;background:var(--teal)}
+.frames-demo{display:flex;gap:15px;align-items:center;margin:12px 0 18px}.fakeframe{width:250px;height:165px;background:linear-gradient(165deg,#dde3d2,#a9beba);border:1px solid #8ea8a2;border-radius:10px;position:relative}.fakeframe .subject{position:absolute;bottom:26px;border:2px solid #087f80;padding:9px 17px;border-radius:20px;background:#d3eee6;color:#066966;font-size:16px}.fakeframe .a{left:30px}.fakeframe .b{right:30px;border-color:#b8652d;background:#ffe4bc;color:#8d3e17}.fakeframe .lost{border-style:dashed;background:transparent;color:#985528}.fakeframe .cap{position:absolute;top:12px;left:14px;font-size:14px;color:#24444a}.ledger p{font-size:18px;line-height:1.65;margin:10px 0}.agent{padding:24px 19px}.agent .role{font-size:12px;letter-spacing:1px;color:var(--orange);margin-bottom:13px}.agent h3{font-size:23px}.agent p{font-size:17px;line-height:1.7;margin-top:14px;color:var(--muted)}.agent .deliver{font-size:13px;border-top:1px solid var(--line);padding-top:13px;margin-top:15px;color:var(--ink)}.review-link{display:block;text-decoration:none;color:var(--ink);padding:21px 23px;border:1px solid var(--line);border-radius:11px;background:var(--white);margin-bottom:13px;font-size:20px}.review-link span{display:block;font-size:15px;color:var(--muted);margin-top:8px}.review-link:hover{border-color:var(--teal);background:var(--mint)}
+.bottom{height:44px;display:flex;align-items:center;gap:16px;padding:0 25px;color:#c2d5cf;font-size:12px}.progress{height:3px;background:#ffffff1b;flex:1;border-radius:5px;overflow:hidden}.progress span{display:block;height:100%;background:#85c6b1}.nav-btn{background:none;border:1px solid #ffffff3b;color:#ddece5;border-radius:6px;width:34px;height:27px}.status{min-width:49px}.overlay{position:fixed;inset:58px 0 0;background:#102b32f5;z-index:20;padding:35px 5vw;overflow:auto;color:#f2f4e9}.overlay[hidden],.notes-panel[hidden]{display:none}.overlay-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:25px}.overlay-head button,.notes-panel button{border:1px solid #c2d5cb;background:#e4eee1;color:#1c4046;border-radius:6px;padding:9px 14px}.toc-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(235px,1fr));gap:13px}.toc-item{display:flex;text-align:left;gap:16px;padding:20px;background:#1d4249;color:#e2ece3;border:1px solid #597970;border-radius:10px;font-size:15px;line-height:1.6}.toc-item b{color:#83cabb}.notes-panel{position:fixed;top:68px;bottom:54px;right:18px;width:365px;max-width:calc(100vw - 36px);background:#fffdf5;border:1px solid #b9c9bd;border-radius:15px;padding:23px;z-index:25;box-shadow:0 12px 70px #0006;display:flex;flex-direction:column;gap:14px}.notes-panel h3{font-size:20px}.notes-panel textarea{flex:1;min-height:100px;resize:none;width:100%;border:1px solid var(--line);border-radius:8px;background:#f6f6ee;padding:13px;font-size:15px;line-height:1.8}.notes-panel .small{font-size:12px}.notes-actions{display:flex;justify-content:space-between;gap:10px}.toast{position:fixed;bottom:55px;left:50%;transform:translateX(-50%);background:#14393e;color:white;border:1px solid #729b90;padding:12px 20px;border-radius:9px;z-index:40;font-size:13px}.toast[hidden]{display:none}
+@media(max-width:750px){.toolbar{padding:0 11px;gap:6px}.toolbar button{padding:7px 9px}.brand{font-size:10px;letter-spacing:.4px}.keyhint,.print-btn{display:none}.bottom{padding:0 12px}.bottom .caption{display:none}}
+@media print{@page{size:15in 8.4375in;margin:0}html,body{background:white}body{-webkit-print-color-adjust:exact;print-color-adjust:exact}.toolbar,.bottom,.overlay,.notes-panel,.toast{display:none!important}#viewport,#shell{height:auto!important;width:auto!important;padding:0;display:block;overflow:visible}#deck{height:auto;transform:none!important;box-shadow:none}.slide{position:relative;display:block!important;break-after:page;page-break-after:always}.slide:last-child{break-after:auto}.matrix-wrap,.shot-table,.memory-chips{overflow:hidden}.slide a{text-decoration:none;color:inherit}}
+</style></head><body>
+<header class="toolbar"><div class="brand">VIDEO ANALYSIS / 04 · ENTITY REVIEW</div><span class="keyhint">← → 이동 · O 목차 · F 전체화면</span><button id="tocButton" aria-expanded="false">목차</button><button id="notesButton" aria-expanded="false">검토 메모</button><button class="print-btn" id="printButton">인쇄 / PDF</button><button id="fullButton" class="primary">전체화면</button></header>
+<main id="viewport"><div id="shell"><div id="deck" aria-label="Entity extraction 검토 슬라이드">
+
+<section class="slide hero active" data-title="같은 대상을 같은 ID로">
+<div class="eyebrow">TECHNICAL REVIEW / 2026.10.06</div>
+<div class="hero-layout"><div><h1>같은 대상을<br>어떻게 같은 ID로<br>묶을 것인가</h1><p class="hero-summary">짧은 영상에서 entity를 찾고,<br>샷을 넘어 기억하고, 다시 검토하는 과정.</p><div class="hero-bottom"><span class="pill">17 SHOTS</span><span class="pill">279 SAMPLES</span><span class="pill">QWEN 3-VL · 4B</span></div><p class="hero-note">현재 코드와 실행 로그를 기준으로 정리했습니다.<br>주황색 페이지는 아직 구현하지 않은 개선안입니다.</p></div><div class="hero-images"><figure class="hero-image"><img data-entity-img="E0002" alt="겨울 복장의 여성, 현재 ID E0002"><figcaption>E0002 · 초반</figcaption></figure><figure class="hero-image"><img data-entity-img="E0005" alt="붉은 단발 여성, 현재 ID E0005"><figcaption>E0005 · 중반</figcaption></figure><figure class="hero-image"><img data-entity-img="E0016" alt="동일 여성의 후반 모습, 현재 ID E0016"><figcaption>E0016 · 후반</figcaption></figure></div></div>
+<div class="footer"><span>ENTITY EXTRACTION / 실제 결과 이미지</span><span>목표: 같은 인물의 재등장을 하나로 연결하기</span></div></section>
+
+<section class="slide" data-title="이 단계가 만드는 것"><div class="eyebrow">01 / CONCEPT <span class="badge">구현됨</span></div><h2>각 샷의 관측을, 전체 영상의 entity 목록으로</h2><p class="lead">인물·동물·주요 물체마다 대표 이미지와 짧은 이름을 만들고, 어떤 샷에 등장했는지 기록합니다.</p>
+<div class="flow"><div class="node"><div class="step">INPUT</div><h3>Adaptive 샷 영상</h3><p>샷별 영상 + 선택 시각<br>원본 시간 정보를 유지</p></div><div class="arrow">→</div><div class="node accent"><div class="step">PROCESS</div><h3>검출 · 동일성 연결</h3><p>대상의 위치를 찾기<br>같은 개체의 관측을 묶기</p></div><div class="arrow">→</div><div class="node"><div class="step">OUTPUT</div><h3>전체 entity 목록</h3><p>대표 이미지 + 레이블<br>샷별 0/1 등장 행렬 + 영상</p></div></div>
+<div class="grid3" style="margin-top:35px"><div class="card"><div class="label">검출 DETECTION</div><h3>무엇이 어디에 보이는가?</h3><p class="small">프레임별 bounding box를 얻습니다.</p></div><div class="card"><div class="label">매칭 IDENTITY</div><h3>전에 봤던 그 대상인가?</h3><p class="small">외형과 문맥을 비교해 ID를 연결합니다.</p></div><div class="card"><div class="label">등장 PRESENCE</div><h3>어떤 샷에서 확인했는가?</h3><p class="small">최종 ID별 관측을 0/1로 정리합니다.</p></div></div><div class="strip">레이블은 읽기 위한 이름입니다. 이름이 같다는 사실만으로 같은 개체가 되지는 않습니다.</div></section>
+
+<section class="slide" data-title="전체 처리 지도"><div class="eyebrow">02 / PIPELINE <span class="badge">현재 기본 모드: sequential</span></div><h2>준비 → 정방향 기억 → 역방향 → 최종 정리</h2><p class="lead">검출과 특징 추출을 먼저 준비하고, 샷별 기억을 순서대로 갱신합니다.</p>
+<div class="flow"><div class="node"><div class="step">01</div><h3>입력 디코딩</h3><p>선택 프레임·시각 확인</p></div><div class="arrow">→</div><div class="node"><div class="step">02</div><h3>검출 보완</h3><p>YOLO + 프레임별 Qwen</p></div><div class="arrow">→</div><div class="node"><div class="step">03</div><h3>샷 내부 후보</h3><p>얼굴·몸·물체 특징</p></div></div>
+<div class="flow"><div class="node accent"><div class="step">04</div><h3>정방향 누적</h3><p>현재 샷 + 전체 과거 기억</p></div><div class="arrow">→</div><div class="node accent"><div class="step">05</div><h3>독립 역방향</h3><p>빈 기억에서 다시 비교</p></div><div class="arrow">→</div><div class="node accent"><div class="step">06</div><h3>최종 재검토</h3><p>연결 검증 + 전체 중복 검색</p></div><div class="arrow">→</div><div class="node"><div class="step">07</div><h3>결과 저장</h3><p>ID·행렬·영상·리포트</p></div></div>
+<div class="strip warning"><strong>추가 논의 중:</strong> 샷 내부의 사라진 대상 재탐색, 샷 요약을 사용하는 agent 기억 구조는 아직 구현 전입니다.</div><p class="tiny" style="margin-top:17px">실행 진입점: extract_entities.py / 누적·역방향·최종 검토: sequential_identity.py</p></section>
+
+<section class="slide" data-title="입력과 시간축"><div class="eyebrow">03 / INPUT</div><h2>이미 줄여둔 샘플을 읽고, 원본 시각을 지킵니다</h2><p class="lead">04는 03의 <code>sampled.mp4</code>와 <code>samples.json</code>을 읽습니다. 원본 영상을 다시 균일 FPS로 샘플링하지 않습니다.</p>
+<div class="grid4"><div class="card metric"><div class="number">17</div><p class="small">입력 샷</p></div><div class="card metric"><div class="number">279</div><p class="small">분석하는 선택 프레임</p></div><div class="card metric"><div class="number">1,253</div><p class="small">원본 시간 격자의 프레임 수</p></div><div class="card metric"><div class="number" style="font-size:49px">52.208s</div><p class="small">이어 붙인 전체 길이</p></div></div>
+<div class="card" style="margin-top:25px"><div class="timegrid"><b>원본 시간축</b><div class="ticks" aria-label="일정한 원본 프레임 간격"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div><b>선택 이미지</b><div class="ticks held"><span style="flex:6">A 유지</span><span style="flex:2">B</span><span style="flex:4">C 유지</span><span style="flex:1">D</span><span style="flex:6">E 유지</span><span style="flex:5">F 유지</span></div></div><p class="tiny">시간 유지 개념도 · 각 선택 이미지를 다음 샘플 시각까지 표시합니다. 그림의 간격은 설명용입니다.</p></div>
+<div class="strip">원본 시각과 영상 길이는 보존합니다. 선택하지 않은 원본 프레임의 실제 가시성까지 검출한 것은 아닙니다.</div></section>
+
+<section class="slide" data-title="검출 준비와 박스"><div class="eyebrow">04 / DETECTION <span class="badge">구현됨</span></div><h2>먼저 박스를 준비하고, Qwen이 검출을 보완합니다</h2><p class="lead">모델을 매 샷마다 반복 로드하는 비용을 줄이기 위해, 프레임별 검출·외형 특징은 먼저 일괄 준비합니다.</p>
+<div class="grid2"><div class="card"><div class="label">프레임별 준비</div><ul class="bullets"><li><strong>YOLO11s</strong>: 인물·물체의 초기 박스 후보</li><li><strong>Qwen</strong>: 프레임과 후보를 보고 추가·제거·설명</li><li><strong>Crop</strong>: 확인된 박스 안의 이미지 추출</li><li><strong>외형 특징</strong>: 얼굴·몸·물체를 벡터로 표현</li></ul><div class="strip">Qwen ON과 OFF는 이 검출 단계부터 달라집니다.</div></div><div class="card dark"><div class="label" style="color:#9ec6bd">박스에 붙는 정보</div><pre>{
+  frame_key: "shot_…_f…",
+  bbox: [x1, y1, x2, y2],
+  kind: "person / animal / object",
+  label: "짧은 시각적 이름",
+  appearance: "보이는 외형 특징",
+  uncertain: true / false
+}</pre><p class="small" style="margin-top:21px">구조 예시 · 실제 JSON의 값은 관측마다 다릅니다.<br>좌표는 각 전체 이미지에서 0~1000으로 정규화합니다.</p></div></div><p class="small" style="margin-top:23px">검출 준비 단계의 Qwen 호출은 아직 전체 이야기 기억을 이용한 동일인 판단이 아닙니다.</p></section>
+
+<section class="slide" data-title="모델별 역할"><div class="eyebrow">05 / MODELS</div><h2>박스, 외형 특징, 문맥 판단의 역할을 나눕니다</h2><p class="lead">외형 벡터는 샷 내부의 후보를 정리하는 데 쓰고, 샷 간 동일성은 Qwen의 시각적 검토로 연결합니다.</p>
+<div class="card" style="padding:8px 20px"><table><thead><tr><th style="width:28%">구성 요소</th><th style="width:31%">입력</th><th>역할</th></tr></thead><tbody><tr><td><strong>YOLO11s</strong></td><td>전체 프레임</td><td>인물·물체 박스 후보 생성</td></tr><tr><td><strong>YuNet + SFace</strong></td><td>인물 crop / 얼굴</td><td>얼굴 검출 및 얼굴 외형 특징</td></tr><tr><td><strong>OSNet-AIN x1.0</strong></td><td>인물의 몸 crop</td><td>몸·의상 기반 인물 외형 특징</td></tr><tr><td><strong>DINOv2-small</strong></td><td>동물·물체 crop</td><td>물체 이미지의 외형 특징</td></tr><tr><td><strong>Qwen3-VL-4B</strong></td><td>프레임·crop·샷 영상·기억 목록</td><td>검출 보완, 이름 부여, 동일성 검토</td></tr></tbody></table></div><div class="strip">DINOv2는 여기서 detector가 아닙니다. 얼굴이 가려지거나 애니메이션 얼굴 검출이 실패하면 얼굴 특징의 도움도 제한됩니다.</div></section>
+
+<section class="slide" data-title="정방향 Qwen에 주는 것"><div class="eyebrow">06 / FORWARD INPUT</div><h2>현재 샷과, 지금까지의 모든 entity 기억을 함께 줍니다</h2><p class="lead">과거 이름만 전달하지 않습니다. 이전에 본 실제 이미지도 함께 비교하게 합니다.</p>
+<div class="grid3"><div class="card"><div class="step">A / CURRENT VIDEO</div><h3>현재 샷 영상</h3><ul class="bullets"><li>모든 adaptive 선택 프레임</li><li>정상 재생 순서와 시각</li><li>임시 ID와 박스 표시</li></ul></div><div class="card"><div class="step">B / LOCAL CANDIDATES</div><h3>샷 내부 후보</h3><ul class="bullets"><li>후보별 최대 3개 crop</li><li>YOLO 박스와 프레임 ID</li><li>기존 외형 설명</li></ul></div><div class="card teal"><div class="step">C / GLOBAL MEMORY</div><h3>전체 과거 기억</h3><ul class="bullets"><li>기존 ID·레이블·외형</li><li>여러 시점의 대표 crop</li><li>과거 등장 샷과 관측</li></ul></div></div>
+<div class="flow"><div class="node accent"><h3>Qwen 검토</h3><p>누락 박스 추가 · 오검출 제외 · 샷 내부 조각 정리 · 짧은 이름 · 기존 ID와 비교</p></div><div class="arrow">→</div><div class="node"><h3>구조화된 수정안</h3><p>프로그램이 ID 참조·좌표·중복·동시 등장을 검사한 뒤 반영합니다.</p></div></div><p class="tiny">오래된 entity도 목록에서 제거하지 않습니다. 현재 버전은 여러 이미지 페이지로 전체 기억을 전달합니다.</p></section>
+
+<section class="slide" data-title="실제 정방향 누적 로그"><div class="eyebrow">07 / MEMORY WALKTHROUGH <span class="badge actual">실제 실행 로그 · 조작 가능</span></div><h2>샷을 넘기며, 기억이 쌓이는 모습을 확인하세요</h2><p class="lead" style="margin-bottom:20px">아래 목록은 최종 ID가 아닌 정방향의 임시 <code>F…</code> 목록입니다. 검토 중 분리된 후보도 포함됩니다.</p>
+<div class="playground"><div class="card"><img id="shotImage" class="shot-img" alt="선택한 샷의 가운데 adaptive 프레임"><div class="shot-controls"><button id="shotPrev" aria-label="이전 샷">‹</button><span id="shotTitle" class="shot-title"></span><input id="shotRange" type="range" min="0" max="16" value="0" aria-label="누적 과정을 볼 샷"><button id="shotNext" aria-label="다음 샷">›</button></div><p id="shotSummary" class="scene-summary"></p><p class="tiny" style="margin-top:8px">샷 요약은 Qwen의 원문이며 오류가 있을 수 있습니다.</p></div><div class="card"><div class="memory-count"><span>누적 임시 ID</span><b id="memoryBefore"></b><span>→</span><b id="memoryAfter" style="color:var(--teal)"></b></div><div id="memoryChips" class="memory-chips"></div><div class="shot-table"><table><thead><tr><th>현재 샷 대상</th><th>판정</th><th>배정 ID</th></tr></thead><tbody id="shotEvents"></tbody></table></div></div></div><div class="strip">전체 관측은 유지하고, 이미지 품질과 서로 다른 샷을 고려해 기억용 대표 이미지를 선택합니다.</div></section>
+
+<section class="slide" data-title="ID를 갱신하는 규칙"><div class="eyebrow">08 / UPDATE RULES</div><h2>일치하면 관측을 추가하고, 애매하면 따로 남깁니다</h2><p class="lead">정방향의 연결은 가설입니다. 최종 공개 ID는 모든 재검토가 끝난 뒤 배정합니다.</p>
+<div class="grid3"><div class="card teal"><div class="label">SAME</div><h3>기존 entity에 연결</h3><p class="body">실제로 존재하는 과거 ID를 지정해야 합니다.</p><p class="small">관측과 새로운 모습을 추가합니다.<br>이전 관측은 계속 보존합니다.</p></div><div class="card"><div class="label">NEW</div><h3>새 임시 ID 등록</h3><p class="body">새 대상으로 판단되면 별도 기억을 만듭니다.</p><p class="small">처음 등장했다는 판단도 이후 검토에서 수정될 수 있습니다.</p></div><div class="card orange"><div class="label">UNCERTAIN</div><h3>불확실 상태로 보존</h3><p class="body">억지로 기존 대상에 연결하지 않습니다.</p><p class="small">검증 실패나 잘못된 ID 참조도 보수적으로 처리합니다.</p></div></div>
+<div class="formula" style="margin-top:30px">샷 내부 ID <strong>S…</strong> → 정방향 <strong>F…</strong> / 역방향 <strong>R…</strong> → 최종 <strong>E…</strong></div><div class="strip warning">같은 프레임에서 서로 다른 박스로 확인된 대상은 하나의 ID로 병합하지 않습니다. 이 제약도 원래 검출이 정확하다는 전제의 영향을 받습니다.</div></section>
+
+<section class="slide" data-title="역방향은 어떻게 독립적인가"><div class="eyebrow">09 / REVERSE PASS</div><h2>마지막 샷에서 빈 기억으로 다시 시작합니다</h2><p class="lead">정방향의 샷 간 ID와 판정 이유를 넘기지 않고, 같은 샷 내부 관측을 다시 연결합니다.</p>
+<div class="card"><div class="label">정방향 · FORWARD MEMORY</div><div class="track"><span>01</span><i>→</i><span>02</span><i>→</i><span>03</span><i>→</i><span>04</span><i>···</i><span>14</span><i>→</i><span>15</span><i>→</i><span>16</span><i>→</i><span>17</span></div><div class="label" style="margin-top:29px">역방향 · FRESH REVERSE MEMORY</div><div class="track back"><span>17</span><i>→</i><span>16</span><i>→</i><span>15</span><i>→</i><span>14</span><i>···</i><span>04</span><i>→</i><span>03</span><i>→</i><span>02</span><i>→</i><span>01</span></div></div>
+<div class="grid2" style="margin-top:25px"><div class="card"><h3>독립적으로 달라지는 것</h3><p class="small">샷 간 매칭 순서, 누적 기억, 임시 ID와 연결 판단.</p></div><div class="card"><h3>두 방향이 공유하는 것</h3><p class="small">검출 박스와 샷 내부 묶음. 역방향은 새 박스를 검출하지 않습니다.</p></div></div><div class="strip">샷 방문 순서만 반대입니다. 샷 안의 동작은 정상 순서로 재생합니다.</div></section>
+
+<section class="slide" data-title="최종 재검토와 병합 조건"><div class="eyebrow">10 / RECONCILIATION</div><h2>방향별 연결을 다시 확인하고, 남은 중복도 찾습니다</h2><p class="lead">현재 구현은 보수적으로 병합합니다. 동의한 연결도 실제 이미지로 다시 검토합니다.</p>
+<div class="grid2" style="grid-template-columns:1.07fr 1fr"><div><img id="pairImage" class="photo" alt="최종 재검토에서 사용한 A와 B의 실제 확대 이미지"><p class="tiny" style="margin-top:9px">실제 검토 자료: S005_001 ↔ S008_004 · 같은 여성의 서로 다른 장면</p><div class="strip" style="font-size:17px">방향별 연결 62건 + 전역 후보 137건<br><strong>총 199건</strong>의 개별 판정 기록</div></div><div class="card"><ul class="bullets" style="margin-top:0"><li><strong>확대 crop + 장면 영상</strong>으로 두 대상 재판정</li><li><code>same</code>이면 <strong>crop만으로</strong> 주 대상 재확인</li><li>둘 다 <code>same</code>이고 제약에 걸리지 않으면 병합</li><li>남은 전체 ID를 페이지 쌍으로 비교해 중복 후보 추가 검색</li></ul><p class="small" style="margin-top:21px">동시 등장 및 <code>different</code> 판정은 간접 연결을 합칠 때도 제약으로 사용합니다. 잘못된 거절이 실제 같은 대상의 병합을 막을 수도 있습니다.</p></div></div></section>
+<section class="slide" data-title="현재 실행 결과"><div class="eyebrow">11 / RUN RESULTS <span class="badge actual">2026-10-06 실행</span></div><h2>자동 실행과 시간축 보존은 확인했습니다</h2><p class="lead">아래 수치는 처리 결과의 규모입니다. entity 수가 적다는 이유로 정확도가 높아지는 것은 아닙니다.</p>
+<div class="grid4"><div class="card metric"><div class="number">45</div><p class="small">Qwen ON 최종 entity</p></div><div class="card metric"><div class="number">169</div><p class="small">Qwen ON 박스 관측</p></div><div class="card metric"><div class="number">279</div><p class="small">유지한 adaptive 샘플</p></div><div class="card metric"><div class="number">0s</div><p class="small">출력 영상 길이 오차</p></div></div>
+<div class="grid2" style="margin-top:25px"><div class="card" style="padding:10px 20px"><table><thead><tr><th>항목</th><th>Qwen OFF</th><th>Qwen ON</th></tr></thead><tbody><tr><td>관측 수</td><td>144</td><td>169</td></tr><tr><td>최종 ID 수</td><td>50</td><td>45</td></tr><tr><td>입력 샘플 / 전체 길이</td><td colspan="2">279 / 52.208333초</td></tr></tbody></table></div><div class="card teal"><h3>자동 일관성 검사 통과</h3><ul class="bullets"><li>모든 선택 프레임의 시각·유지 구간</li><li>등장 행렬 ↔ 박스 관측 ↔ 최종 ID</li><li>양방향 대상 커버리지·대표 이미지 파일</li></ul></div></div><p class="tiny" style="margin-top:18px">ON/OFF는 검출 목록과 매칭 정책도 다릅니다. 동일한 ID 문자열이 두 모드에서 같은 대상을 뜻하지 않습니다.</p></section>
+
+<section class="slide" data-title="양방향 일치율의 의미"><div class="eyebrow">12 / CONSISTENCY <span class="badge actual">실제 비교 수치</span></div><h2>두 방향의 판단 차이는 컸습니다</h2><p class="lead">“동일 개체라고 묶은 ID 쌍”의 집합을 비교하면, 두 방향이 모두 동의한 쌍은 19개입니다.</p>
+<div class="bar" aria-label="정방향만 69쌍, 공통 19쌍, 역방향만 141쌍"><div class="forward"><span>정방향만</span><b>69</b></div><div class="both"><span>공통</span><b>19</b></div><div class="reverse"><span>역방향만</span><b>141</b></div></div>
+<div class="grid2" style="margin-top:28px"><div class="card dark"><div class="label" style="color:#a9c7be">동일 개체 쌍 JACCARD</div><div class="number" style="font-size:90px">8.3<span style="font-size:42px">%</span></div><p style="font-family:monospace;font-size:22px;margin-top:17px">19 / (69 + 19 + 141)</p></div><div class="card"><h3>이 수치를 어떻게 읽어야 하나?</h3><ul class="bullets"><li>정답 라벨과 비교한 정확도가 아닙니다.</li><li>진행 방향에 따라 매칭이 달라졌다는 뜻입니다.</li><li>같은 모델을 반복 호출하는 것만으로 안정적인 교정이 보장되지 않습니다.</li></ul></div></div><div class="strip warning">기억을 늘리고 역방향으로 확인하는 구조는 구현됐지만, 현재 판단의 일관성은 충분하지 않습니다.</div></section>
+
+<section class="slide" data-title="여전히 분리된 빨간머리 여성"><div class="eyebrow">13 / FAILURE CASE <span class="badge actual">실제 최종 대표 이미지</span></div><h2>같은 여성이 여전히 여러 ID로 남았습니다</h2><p class="lead" style="margin-bottom:18px">의상·조명·시점이 바뀐 재등장을 완전히 연결하지 못했습니다. 아래 ID는 수동으로 합치지 않았습니다.</p>
+<div class="grid3"><div class="card" style="padding:15px"><img class="photo crop" data-entity-img="E0002" alt="E0002 겨울 복장의 여성"><div class="photo-label"><b>E0002</b><span>초반 겨울 복장</span></div><div class="mini-tags"><span>shot 02</span><span>shot 03</span></div></div><div class="card" style="padding:15px"><img class="photo crop" data-entity-img="E0005" alt="E0005 붉은 단발 여성"><div class="photo-label"><b>E0005</b><span>중반 장면</span></div><div class="mini-tags"><span>shot 05</span><span>07</span><span>08</span><span>09</span></div></div><div class="card" style="padding:15px"><img class="photo crop" data-entity-img="E0016" alt="E0016 같은 여성의 후반 뒷모습"><div class="photo-label"><b>E0016</b><span>후반 일부 모습</span></div><div class="mini-tags"><span>shot 09</span><span>11</span><span>12</span></div></div></div><p class="small" style="margin-top:15px">E0001 등 추가 조각도 있습니다. 이 사례가 다음 설계를 평가할 핵심 기준입니다.</p></section>
+
+<section class="slide" data-title="전체 entity × shot 행렬"><div class="eyebrow">14 / PRESENCE MATRIX <span class="badge actual">실제 45개 entity · 검색 / 선택 가능</span></div><h2>등장 여부는 최종 관측에서 계산합니다</h2><p class="lead" style="margin-bottom:18px">1 = 해당 샷의 분석 샘플에서 확인 · 0 = 확인하지 못함. 원본의 미선택 프레임까지 없다는 의미는 아닙니다.</p>
+<div class="matrix-layout"><div><div class="matrix-tools"><input id="entitySearch" type="search" placeholder="ID 또는 레이블 검색" aria-label="Entity ID 또는 레이블 검색"><span class="tiny" id="matrixCount"></span></div><div class="matrix-wrap"><table class="matrix" id="presenceTable" aria-label="최종 entity별 17개 샷의 등장 여부"><thead id="matrixHead"></thead><tbody id="matrixBody"></tbody></table></div></div><aside class="entity-preview"><img id="entityPreviewImage" alt="선택한 entity의 대표 이미지"><h3 id="entityPreviewTitle"></h3><p id="entityPreviewInfo"></p></aside></div><p class="tiny" style="margin-top:13px">행의 ID를 누르면 대표 이미지를 볼 수 있습니다. 전체 데이터가 HTML에 포함되어 있으며, CSV 원본은 결과 폴더에 있습니다.</p></section>
+
+<section class="slide" data-title="최종 결과물 찾아보기"><div class="eyebrow">15 / ARTIFACTS</div><h2>결과와 근거를 함께 남깁니다</h2><p class="lead">기본 출력: <code>04_entity_extraction/outputs/sintel_sequential/</code></p>
+<div class="grid2"><div class="card"><div class="artifact"><div class="icon">ID</div><div><h3><a href="outputs/sintel_sequential/with_qwen/entities.json" target="_blank" rel="noopener">전체 entity 목록</a></h3><p>대표 이미지, 레이블, 등장 샷, 관측 기록</p></div></div><div class="artifact"><div class="icon">0/1</div><div><h3><a href="outputs/sintel_sequential/with_qwen/entity_shot_presence.csv" download>샷별 등장 행렬</a></h3><p>entity를 행, shot을 열로 둔 CSV</p></div></div><div class="artifact"><div class="icon">▶</div><div><h3><a href="outputs/sintel_sequential/with_qwen/adaptive_entities_full.mp4" target="_blank" rel="noopener">전체 bounding box 영상</a></h3><p>확정된 ID와 레이블을 시간축에 표시</p></div></div></div><div class="card"><div class="artifact"><div class="icon">↔</div><div><h3><a href="outputs/sintel_sequential/qwen_comparison_full.mp4" target="_blank" rel="noopener">Qwen OFF / ON 비교 영상</a></h3><p>왼쪽 OFF, 오른쪽 ON · 두 모드의 ID는 독립</p></div></div><div class="artifact"><div class="icon">LOG</div><div><h3><a href="outputs/sintel_sequential/with_qwen/sequential/direction_comparison.json" target="_blank" rel="noopener">양방향 차이와 검토 근거</a></h3><p>연결 차이, 최종 매핑, 요청·응답·비교 이미지</p></div></div><div class="artifact"><div class="icon">MD</div><div><h3><a href="SEQUENTIAL_MATCHING.md" target="_blank" rel="noopener">현재 구현 설명서</a></h3><p>사용법, 알고리즘, 실행 기록과 한계</p></div></div></div></div><p class="tiny" style="margin-top:18px">슬라이드·이미지·행렬은 단일 HTML에 포함됩니다. 이 페이지의 원본 파일/영상 링크는 HTML을 프로젝트 폴더에서 열 때 유효합니다.</p></section>
+
+<section class="slide" data-title="실행 시간과 캐시"><div class="eyebrow">16 / RUNTIME & CACHE</div><h2>이번 실행은 25분 51초, 대부분이 매칭 재검토입니다</h2><p class="lead">기존 검출·외형 특징 캐시를 재사용한 실행입니다. 첫 실행 전체 추론 비용을 측정한 수치는 아닙니다.</p>
+<div class="grid2"><div class="card"><div class="label">TOTAL WALL CLOCK</div><div class="number">25분 51초</div><div class="duration-bar"><span></span></div><p class="body"><em>24분 23초</em> — 정방향·역방향·최종 검토</p><p class="small" style="margin-top:17px">그 외 시간: 입력 준비, 영상 저장, OFF 처리, 비교 영상.<br>시간은 <code>timing.json</code>과 콘솔에 기록합니다.</p></div><div class="card"><h3>캐시는 무엇을 재사용하나?</h3><ul class="bullets"><li>디코딩한 프레임, 검출 박스와 crop</li><li>얼굴·몸·물체의 외형 특징</li><li>같은 입력·설정의 Qwen 요청 응답</li></ul><p class="small" style="margin-top:22px">모델 가중치 캐시와 분석 결과 캐시는 별개입니다.<br>다른 영상의 분석 결과를 그대로 재사용하지 않습니다.</p></div></div><div class="code-card" style="margin-top:24px"><pre>cd ~/HayeonP/video_analysis/04_entity_extraction
+./run.sh</pre><p class="small" style="color:#aec7be;margin-top:8px">현재 구현된 전체 처리는 이 명령으로 자동 완료됩니다. 새 agent 구조와 타깃 재탐색은 아직 포함되지 않습니다.</p></div></section>
+
+<section class="slide plan-slide" data-title="개선안: 사라진 대상 다시 찾기"><div class="eyebrow">17 / PROPOSAL A <span class="badge plan">설계 제안 · 아직 미구현</span></div><h2>같은 샷에서 사라진 대상은, 지정해서 다시 찾습니다</h2><p class="lead">이전에는 A와 B가 보였는데 현재 검출이 A만 반환했다면, B의 검출 누락 가능성을 재검사합니다.</p>
+<div class="grid2"><div class="card"><div class="frames-demo"><div class="fakeframe"><span class="cap">이전 샘플</span><span class="subject a">A</span><span class="subject b">B</span></div><span style="font-size:27px">→</span><div class="fakeframe"><span class="cap">현재 샘플</span><span class="subject a">A</span><span class="subject b lost">B ?</span></div></div><p class="tiny">설계 설명용 개념도 · 실제 검출 결과가 아닙니다.</p><ul class="bullets"><li>마지막으로 보인 crop·박스·시각 전달</li><li>위치 주변 → 이동 예상 범위 → 전체 화면 검색</li><li>다른 동물의 박스 안에 가려진 대상도 확인</li></ul></div><div class="card orange"><h3>재탐색의 결과를 구분합니다</h3><ul class="bullets"><li><strong>확인됨:</strong> 현재 박스를 기존 ID에 연결</li><li><strong>일부 가림:</strong> 보이는 부분과 불확실성 기록</li><li><strong>화면 밖 / 찾지 못함:</strong> 박스를 만들지 않음</li><li><strong>애매함:</strong> 기억을 유지하고 제한적으로 재시도</li></ul></div></div><div class="strip warning">과거 박스를 현재 프레임에 복사하지 않습니다. 재탐색 예산은 adaptive 샘플의 실제 경과 시간과 실패 횟수를 함께 고려합니다.</div></section>
+
+<section class="slide plan-slide" data-title="개선안: 요약과 기억을 쓰는 agent"><div class="eyebrow">18 / PROPOSAL B <span class="badge plan">새 구조 제안 · 아직 미구현</span></div><h2>샷 요약과 entity 기억을 함께 추론하는 구조</h2><p class="lead">현재는 샷 요약을 저장하지만, 사건·인물 관계의 누적 기억으로 활용하지 않습니다. 이 지점을 바꿉니다.</p>
+<div class="grid4"><div class="card agent"><div class="role">01 / OBSERVER</div><h3>샷 관찰</h3><p>보이는 대상과 행동·관계를 정리하고, 시각과 crop에 근거를 연결합니다.</p><div class="deliver">관측 + 근거 있는 샷 요약</div></div><div class="card agent"><div class="role">02 / IDENTITY REASONER</div><h3>동일성 가설</h3><p>이전 entity와 샷 요약을 함께 읽고, 같은 인물일 가능성과 반대 근거를 만듭니다.</p><div class="deliver">후보 ID + 가설 + 부족한 증거</div></div><div class="card agent"><div class="role">03 / EVIDENCE RETRIEVER</div><h3>추가 증거 검색</h3><p>얼굴이 보이는 샷, 연결되는 행동, 가림이 풀리는 시점을 다시 찾아옵니다.</p><div class="deliver">비교할 영상·프레임·crop</div></div><div class="card agent orange"><div class="role">04 / VERIFIER</div><h3>검증·기억 갱신</h3><p>이미지 근거를 검사해 연결·보류·분리를 결정하고, 기존 판단도 수정합니다.</p><div class="deliver">근거가 붙은 ID 변경 이력</div></div></div>
+<div class="strip warning">역할 이름만 나누는 것으로 충분하지 않습니다. 실제로 추가 증거를 검색하고, 잘못된 과거 판단을 되돌릴 수 있어야 합니다.</div><p class="tiny" style="margin-top:16px">이 그림의 agent는 새 분석 프로그램의 역할 설계입니다. 현재 실행에 다중 agent를 사용했다는 뜻이 아닙니다.</p></section>
+
+<section class="slide plan-slide" data-title="새 기억 구조와 판단 수정"><div class="eyebrow">19 / EVIDENCE MEMORY <span class="badge plan">제안 · 미실행</span></div><h2>결론만 쌓지 않고, 근거와 가설을 함께 기억합니다</h2><p class="lead">“빨간 머리 여성”이라는 문자열 대신, 왜 같은 사람일 수 있는지와 무엇을 더 확인해야 하는지를 저장합니다.</p>
+<div class="grid2"><div class="card ledger"><div class="label">ENTITY MEMORY — 제안 필드</div><p><code>stable_traits</code> 얼굴·머리·신체의 지속적 특징</p><p><code>changing_traits</code> 옷·조명·자세 등 변화</p><p><code>views</code> 선명한 얼굴 / 전신 / 옆모습</p><p><code>appearances</code> 샷·시각·박스의 근거</p><p><code>relations</code> 다른 대상과의 상호작용</p><p><code>hypotheses</code> 동일성 후보와 반대 근거</p><p><code>decisions</code> 합침·분리·보류 및 변경 이력</p></div><div class="card"><h3>빨간머리 여성 사례의 확인 순서</h3><ul class="bullets"><li>겨울 복장과 민소매 장면을 동일성 가설로 연결</li><li>옷 차이는 변화 특징으로 분리</li><li>얼굴·단발 형태가 보이는 추가 장면 검색</li><li>동시에 별개 인물로 나오는 반대 증거 확인</li><li>충분하면 ID 통합, 부족하면 가설 유지</li></ul></div></div><div class="strip warning">샷 요약도 모델의 추정입니다. 이야기상 역할만으로 합치지 않으며, 요약의 각 주장에 실제 프레임 근거를 연결해야 합니다.</div></section>
+
+<section class="slide plan-slide" data-title="새 구조에서 바꿔야 할 핵심"><div class="eyebrow">20 / DESIGN DECISIONS <span class="badge plan">검토할 변경점</span></div><h2>한 번의 오판이 이후 병합을 영구히 막지 않도록</h2><p class="lead">현재의 보수적 병합 규칙에는 장점과 비용이 있습니다. 새 설계에서는 증거 강도와 수정 절차를 명시해야 합니다.</p>
+<div class="card" style="padding:8px 20px"><table><thead><tr><th style="width:24%">항목</th><th style="width:34%">현재 구현</th><th>새 구조에서 검토할 방향</th></tr></thead><tbody><tr><td>샷 요약</td><td>로그로 저장</td><td>근거와 연결해 전체 이야기 기억에 누적</td></tr><tr><td>추가 확인</td><td>미리 정한 crop·장면으로 재판정</td><td>부족한 정보에 따라 도구로 새 증거 검색</td></tr><tr><td>부정 판정</td><td>최종 병합 과정에서 제약으로 사용</td><td>강한 반대 증거와 약한 의심을 분리·재평가</td></tr><tr><td>잘못 묶인 ID</td><td>샷 내부 seed를 개체별로 다시 나누는 기능 없음</td><td>관측 단위로 되돌릴 수 있는 변경 이력</td></tr><tr><td>비용 관리</td><td>전체 기억 + 전역 페이지 쌍 검토</td><td>불확실한 사례 중심의 검색·검토 예산</td></tr></tbody></table></div><div class="strip warning">같은 Qwen 4B를 여러 역할로 반복 호출하면 오류가 함께 반복될 수 있습니다. 역할 분리는 정확도 향상을 보장하지 않습니다.</div></section>
+
+<section class="slide" data-title="무엇으로 개선을 판단할까"><div class="eyebrow">21 / EVALUATION</div><h2>“같아 보인다”에서, 검토 가능한 평가로</h2><p class="lead">새 구조를 구현한다면 현재 결과를 기준선으로 두고, 동일한 샷에서 실제 개선을 비교해야 합니다.</p>
+<div class="grid3"><div class="card"><div class="label">IDENTITY</div><h3>같은 대상을 잘 묶나</h3><ul class="bullets"><li>붉은 단발 여성의 ID 분할 수</li><li>다른 개체를 잘못 합친 사례</li><li>작은 용과 큰 생물의 구분</li></ul></div><div class="card"><div class="label">DETECTION</div><h3>보이는 대상을 놓치나</h3><ul class="bullets"><li>샷 내부 검출 누락과 복구</li><li>재탐색이 만든 잘못된 박스</li><li>신체 일부·배경의 잘못된 entity화</li></ul></div><div class="card"><div class="label">COST & TRACE</div><h3>비용과 근거를 추적하나</h3><ul class="bullets"><li>요청 수·토큰·실행 시간</li><li>어떤 증거로 ID를 바꿨는가</li><li>캐시 여부와 재실행 가능성</li></ul></div></div><div class="strip">정확도 평가는 사람이 확인한 기준 관측이 필요합니다. 양방향 일치율은 보조적인 일관성 지표로 사용합니다.</div></section>
+
+<section class="slide" data-title="검토 순서와 메모"><div class="eyebrow">22 / REVIEW</div><h2>실패 사례를 보고, 다음 구조를 결정하면 됩니다</h2><p class="lead">현재 결과와 제안 구조를 오가며 검토할 수 있도록 목차와 슬라이드별 메모를 넣었습니다.</p>
+<div class="grid2"><div><a class="review-link" href="#slide-14">① 같은 여성이 어디서 분리됐는가<span>실제 이미지 · E0002 / E0005 / E0016</span></a><a class="review-link" href="#slide-19">② 요약과 entity 기억을 어떻게 사용하나<span>관찰 → 가설 → 증거 검색 → 검증</span></a><a class="review-link" href="#slide-18">③ 사라진 대상을 어떤 조건으로 다시 찾나<span>누락 복구와 오검출 방지의 균형</span></a></div><div class="card dark"><h3>현재 제공되는 것</h3><ul class="bullets"><li>실행 한 번으로 끝나는 분석 파이프라인</li><li>정방향·역방향·최종 검토와 결과 파일</li><li>실제 로그·이미지·행렬을 담은 이 자료</li></ul><h3 style="margin-top:29px;color:#e7bb91">아직 추가되지 않은 것</h3><p class="small" style="margin-top:12px">샷 내부 타깃 재탐색<br>샷 요약 기반의 도구 사용 agent 구조<br>붉은 단발 여성의 완전한 동일인 통합</p></div></div><p class="small" style="margin-top:25px">검토 메모는 이 브라우저에 저장되며 JSON으로 내려받을 수 있습니다. 분석 데이터나 ID를 변경하지 않습니다.</p></section>
+</div></div></main>
+<footer class="bottom"><button class="nav-btn" id="prev" aria-label="이전 슬라이드">←</button><button class="nav-btn" id="next" aria-label="다음 슬라이드">→</button><span class="status" id="counter" aria-live="polite"></span><div class="progress" role="progressbar" aria-label="슬라이드 진행률" id="progress"><span id="progressFill"></span></div><span class="caption" id="sectionCaption"></span></footer>
+<aside class="overlay" id="toc" hidden aria-label="전체 슬라이드 목차"><div class="overlay-head"><h3>전체 흐름</h3><button id="closeToc">닫기 · Esc</button></div><div class="toc-grid" id="tocGrid"></div></aside>
+<aside class="notes-panel" id="notes" hidden aria-label="슬라이드별 검토 메모"><div class="notes-actions"><h3>검토 메모</h3><button id="closeNotes">닫기</button></div><div class="small" id="noteTitle"></div><textarea id="noteText" placeholder="이 슬라이드에서 확인할 점이나 수정 의견을 적으세요." aria-label="현재 슬라이드 검토 메모"></textarea><div class="small" id="noteStatus">메모는 이 브라우저에만 저장됩니다.</div><button id="exportNotes">전체 메모 JSON 내려받기</button></aside>
+<div class="toast" id="toast" hidden role="status"></div>
+<script id="runData" type="application/json">__RUN_DATA__</script>
+<script>
+'use strict';
+const D=JSON.parse(document.getElementById('runData').textContent);
+const $=id=>document.getElementById(id);
+const slides=Array.from(document.querySelectorAll('.slide'));
+const entities=new Map(D.entities.map(e=>[e.entity_id,e]));
+let current=0,shot=0,selected='E0002',toastTimer,notesData={},storageWorks=true;
+try{
+  notesData=JSON.parse(localStorage.getItem('entity-review-notes-v1')||'{}');
+  if(!notesData||typeof notesData!=='object'||Array.isArray(notesData))notesData={};
+}catch(_){notesData={};storageWorks=false;}
+function toast(message){
+  $('toast').textContent=message;$('toast').hidden=false;
+  clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('toast').hidden=true,4000);
+}
+document.querySelectorAll('[data-entity-img]').forEach(img=>img.src=entities.get(img.dataset.entityImg).image);
+$('pairImage').src=D.pair_image;
+slides.forEach((s,i)=>{
+  if(!s.querySelector('.footer')){
+    const f=document.createElement('div');f.className='footer';
+    const a=document.createElement('span'),b=document.createElement('span');
+    a.textContent='04 ENTITY EXTRACTION / '+(s.classList.contains('plan-slide')?'DESIGN PROPOSAL':'IMPLEMENTATION REVIEW');
+    b.textContent=String(i+1).padStart(2,'0')+' / '+slides.length;f.append(a,b);s.append(f);
+  }
+  s.setAttribute('aria-label','슬라이드 '+(i+1)+': '+s.dataset.title);
+  const button=document.createElement('button'),n=document.createElement('b'),t=document.createElement('span');
+  button.className='toc-item';n.textContent=String(i+1).padStart(2,'0');t.textContent=s.dataset.title;
+  button.append(n,t);button.onclick=()=>{toggleToc(false);go(i);};$('tocGrid').append(button);
+});
+function fit(){
+  const v=$('viewport'),scale=Math.max(.08,Math.min((v.clientWidth-20)/1440,(v.clientHeight-20)/810));
+  $('shell').style.width=1440*scale+'px';$('shell').style.height=810*scale+'px';
+  $('deck').style.transform='scale('+scale+')';
+}
+function updateNote(){
+  const key='slide-'+(current+1);
+  $('noteTitle').textContent=String(current+1).padStart(2,'0')+' · '+slides[current].dataset.title;
+  $('noteText').value=typeof notesData[key]==='string'?notesData[key]:'';
+  $('noteStatus').textContent=storageWorks?'이 브라우저에 저장됩니다. 공유하려면 JSON을 내려받으세요.':'저장소를 사용할 수 없어 현재 창에서만 보관됩니다. JSON을 내려받으세요.';
+}
+function go(index,hash=true){
+  current=Math.max(0,Math.min(slides.length-1,index));
+  slides.forEach((s,i)=>{s.classList.toggle('active',i===current);s.setAttribute('aria-hidden',String(i!==current));});
+  $('counter').textContent=String(current+1).padStart(2,'0')+' / '+slides.length;
+  $('sectionCaption').textContent=slides[current].dataset.title;
+  $('progressFill').style.width=((current+1)/slides.length*100)+'%';
+  $('progress').setAttribute('aria-valuenow',current+1);$('progress').setAttribute('aria-valuemin','1');$('progress').setAttribute('aria-valuemax',slides.length);
+  $('prev').disabled=current===0;$('next').disabled=current===slides.length-1;updateNote();
+  if(hash){try{history.replaceState(null,'','#slide-'+(current+1));}catch(_){}}
+}
+function fromHash(){const m=location.hash.match(/^#slide-(\d+)$/);go(m?Number(m[1])-1:0,false);}
+function toggleToc(open){
+  $('toc').hidden=!open;$('tocButton').setAttribute('aria-expanded',String(open));
+  (open?$('closeToc'):$('tocButton')).focus();
+}
+function toggleNotes(open){
+  $('notes').hidden=!open;$('notesButton').setAttribute('aria-expanded',String(open));
+  if(open){updateNote();$('noteText').focus();}else $('notesButton').focus();
+}
+async function fullscreen(){
+  try{
+    if(document.fullscreenElement)await document.exitFullscreen();
+    else if(document.documentElement.requestFullscreen)await document.documentElement.requestFullscreen();
+    else toast('브라우저의 전체화면 기능을 사용하세요.');
+  }catch(_){toast('전체화면 전환이 제한되었습니다. 브라우저 전체화면 기능을 사용하세요.');}
+}
+$('prev').onclick=()=>go(current-1);$('next').onclick=()=>go(current+1);
+$('tocButton').onclick=()=>toggleToc($('toc').hidden);$('closeToc').onclick=()=>toggleToc(false);
+$('notesButton').onclick=()=>toggleNotes($('notes').hidden);$('closeNotes').onclick=()=>toggleNotes(false);
+$('fullButton').onclick=fullscreen;$('printButton').onclick=()=>window.print();
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape'){if(!$('toc').hidden)toggleToc(false);if(!$('notes').hidden)toggleNotes(false);return;}
+  if(e.ctrlKey||e.metaKey||e.altKey||/INPUT|TEXTAREA|SELECT/.test(e.target.tagName)||e.target.isContentEditable)return;
+  if(!$('toc').hidden||!$('notes').hidden)return;
+  if(e.code==='Space'&&/BUTTON|A/.test(e.target.tagName))return;
+  if(e.key==='ArrowRight'||e.key==='PageDown'||e.code==='Space'){e.preventDefault();go(current+(e.shiftKey?-1:1));}
+  else if(e.key==='ArrowLeft'||e.key==='PageUp'){e.preventDefault();go(current-1);}
+  else if(e.key==='Home'){e.preventDefault();go(0);}
+  else if(e.key==='End'){e.preventDefault();go(slides.length-1);}
+  else if(e.key.toLowerCase()==='o')toggleToc(true);
+  else if(e.key.toLowerCase()==='f')fullscreen();
+});
+window.addEventListener('resize',fit);document.addEventListener('fullscreenchange',fit);window.addEventListener('hashchange',fromHash);
+$('noteText').addEventListener('input',()=>{
+  notesData['slide-'+(current+1)]=$('noteText').value;
+  try{localStorage.setItem('entity-review-notes-v1',JSON.stringify(notesData));$('noteStatus').textContent='저장됨 · 이 브라우저에만 보관됩니다.';}
+  catch(_){storageWorks=false;$('noteStatus').textContent='현재 창에서만 보관 중 · JSON으로 내려받아 주세요.';}
+});
+$('exportNotes').onclick=()=>{
+  const notes=slides.map((s,i)=>({slide:i+1,title:s.dataset.title,note:notesData['slide-'+(i+1)]||''}));
+  const blob=new Blob([JSON.stringify({document:'Entity Extraction Review',exported_at:new Date().toISOString(),notes},null,2)],{type:'application/json;charset=utf-8'});
+  const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='entity-review-notes.json';
+  document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
+};
+function renderShot(index){
+  shot=Math.max(0,Math.min(D.states.length-1,index));const s=D.states[shot];
+  $('shotImage').src=s.image;$('shotTitle').textContent='SHOT '+String(shot+1).padStart(2,'0')+' / '+D.states.length;
+  $('shotRange').value=shot;$('shotRange').max=D.states.length-1;
+  $('shotSummary').textContent=s.frame_count+' samples · '+(s.summary||'샷 요약 없음');
+  $('memoryBefore').textContent=s.before;$('memoryAfter').textContent=s.after;
+  $('memoryChips').replaceChildren();
+  if(!s.memory.length)$('memoryChips').textContent='아직 기억에 등록된 entity가 없습니다.';
+  s.memory.forEach(m=>{const n=document.createElement('span');n.textContent=m.id+' · '+m.label;$('memoryChips').append(n);});
+  $('shotEvents').replaceChildren();
+  s.events.forEach(e=>{
+    const tr=document.createElement('tr');
+    [e.local_id+' · '+e.label,e.co_visible_blocked?'병합 차단':e.decision,e.assigned_id].forEach(v=>{const td=document.createElement('td');td.textContent=v;tr.append(td);});
+    $('shotEvents').append(tr);
+  });
+  $('shotPrev').disabled=shot===0;$('shotNext').disabled=shot===D.states.length-1;
+}
+$('shotRange').oninput=e=>renderShot(Number(e.target.value));$('shotPrev').onclick=()=>renderShot(shot-1);$('shotNext').onclick=()=>renderShot(shot+1);
+const head=document.createElement('tr');
+['ID','레이블',...D.presence.shots.map(s=>s.slice(-2))].forEach(v=>{const th=document.createElement('th');th.scope='col';th.textContent=v;head.append(th);});
+$('matrixHead').append(head);
+function preview(id){
+  selected=id;const e=entities.get(id);$('entityPreviewImage').src=e.image;$('entityPreviewImage').alt=e.entity_id+' '+e.label;
+  $('entityPreviewTitle').textContent=e.entity_id+' · '+e.label;
+  $('entityPreviewInfo').textContent=e.observations+'개 관측 / '+e.shots.length+'개 샷 · 등장 샷: '+e.shots.map(s=>s.slice(-2)).join(', ');
+  document.querySelectorAll('#matrixBody tr').forEach(tr=>tr.classList.toggle('selected',tr.dataset.entity===id));
+}
+function matrix(){
+  const query=$('entitySearch').value.toLocaleLowerCase();
+  const rows=D.presence.rows.filter(r=>(r.entity_id+' '+r.label).toLocaleLowerCase().includes(query));
+  $('matrixBody').replaceChildren();
+  rows.forEach(r=>{
+    const tr=document.createElement('tr');tr.dataset.entity=r.entity_id;
+    const id=document.createElement('td'),b=document.createElement('button');
+    b.className='entity-btn';b.textContent=r.entity_id;b.setAttribute('aria-label',r.entity_id+' '+r.label+' 대표 이미지 보기');b.onclick=()=>preview(r.entity_id);
+    id.append(b);tr.append(id);const name=document.createElement('td');name.textContent=r.label;name.title=r.label;tr.append(name);
+    D.presence.shots.forEach(s=>{const td=document.createElement('td');td.textContent=r[s];td.className=r[s]?'on':'off';tr.append(td);});
+    $('matrixBody').append(tr);
+  });
+  $('matrixCount').textContent=rows.length+' / '+D.entities.length+' entities';
+  if(rows.length&&!rows.some(r=>r.entity_id===selected))selected=rows[0].entity_id;
+  preview(selected);
+}
+$('entitySearch').oninput=matrix;
+window.addEventListener('beforeprint',()=>slides.forEach(s=>s.removeAttribute('aria-hidden')));
+window.addEventListener('afterprint',()=>go(current,false));
+renderShot(7);matrix();fromHash();fit();
+</script>
+</body></html>

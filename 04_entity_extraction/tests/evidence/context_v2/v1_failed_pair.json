@@ -1,0 +1,21 @@
+{
+  "ids": [
+    "S003_002",
+    "S005_001"
+  ],
+  "decision": "different",
+  "video_review": {
+    "decision": "same",
+    "kind": "person",
+    "label": "빨간 머리의 여성 캐릭터",
+    "visual_evidence": "두 캡처 모두 빨간 머리와 눈썹, 입술, 목에 있는 문신이 있는 여성 캐릭터를 보여주며, 옷차림(가슴에 드러나는 스타일의 상의)도 일치함.",
+    "temporal_evidence": "A는 9.208초, B는 14.875초와 15.417초에 나타나며, 두 시점에서 캐릭터의 외모와 행동이 연속적으로 일치함."
+  },
+  "crop_review": {
+    "decision": "different",
+    "reason": "Column A shows a silhouette with indistinct facial features and no visible hair or head details, while Column B shows two distinct views of a female character with red hair, defined facial features, and visible shoulder straps — anatomical differences confirm they are not the same primary subject."
+  },
+  "evidence": "sequential/final/direction_pairs",
+  "phase": "direction_pairs",
+  "merged": false
+}

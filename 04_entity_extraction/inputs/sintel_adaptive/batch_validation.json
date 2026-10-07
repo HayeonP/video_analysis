@@ -1,0 +1,15 @@
+{
+  "videos": 17,
+  "passed_video_validations": 17,
+  "source_frames": 1253,
+  "selected_frames": 279,
+  "saved_jpegs": 279,
+  "total_original_video_duration_sec": 52.208333333333336,
+  "maximum_video_duration_error_sec": 0.0,
+  "maximum_container_duration_error_sec": 0.0,
+  "maximum_hold_seconds": 1.0,
+  "audio_streams_preserved": 17,
+  "original_timeline_gaps_frames": 0,
+  "original_timeline_overlaps_frames": 0,
+  "note": "Timeline coverage uses sample hold intervals. Intermediate source images are intentionally omitted by sampling."
+}

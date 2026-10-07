@@ -1,0 +1,10 @@
+{
+  "passed": true,
+  "decoded_frames": 48,
+  "expected_sampled_frames": 48,
+  "exact_sample_timestamps": true,
+  "video_duration_sec": 6.25,
+  "video_duration_error_sec": 0.0,
+  "container_duration_error_sec": 0.0,
+  "audio_preserved": true
+}

@@ -1,0 +1,15 @@
+{
+  "source": "User-provided partial same-identity groups, 2026-10-07; evaluation only, never production constraints",
+  "ambiguous_ids": ["E0038", "E0079m"],
+  "groups": [
+    {"name": "red_haired_person", "kind": "person", "ids": ["E0001", "E0002", "E0003", "E0004", "E0019", "E0029", "E0032", "E0034", "E0055", "E0075", "E0089", "E0075"]},
+    {"name": "person_1", "kind": "person", "ids": ["E0013", "E0017"]},
+    {"name": "person_2", "kind": "person", "ids": ["E0025", "E0028"]},
+    {"name": "small_bird", "kind": "other", "ids": ["E0043", "E0045", "E0047", "E0050", "E0052", "E0057", "E0060", "E0061", "E0057", "E0058", "E0060", "E0061", "E0070", "E0071", "E0072", "E0073", "E0074", "E0079m"]},
+    {"name": "large_bird_1", "kind": "other", "ids": ["E0038", "E0041"]},
+    {"name": "large_bird_2", "kind": "other", "ids": ["E0042", "E0038", "E0044", "E0049", "E0051", "E0053", "E0054"]},
+    {"name": "large_bird_3", "kind": "other", "ids": ["E0046"]},
+    {"name": "large_bird_4", "kind": "other", "ids": ["E0068", "E0069"]},
+    {"name": "dragon", "kind": "other", "ids": ["E0062", "E0063"]}
+  ]
+}

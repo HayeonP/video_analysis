@@ -1,0 +1,131 @@
+{
+  "id": "shot_0004",
+  "source": "/home/rubis/HayeonP/video_analysis/03_adaptive_sampling/outputs/sintel_trainler_full/shots/shot_0004.mp4",
+  "source_sha256": "c4ffb640cd6ed553aaf051876725793d2f7fda6e6b0ee99e76d0d74146dbbb46",
+  "source_fps": "24",
+  "source_frames": 46,
+  "source_duration_sec": 1.9166666666666667,
+  "original_start_frame": 288,
+  "original_video": "/home/rubis/HayeonP/video_analysis/02_shot_boundary_detection/videos/sintel_trailer_full.mp4",
+  "original_fps": "24",
+  "sampled_frames": 8,
+  "effective_fps": 4.173913043478261,
+  "frame_reduction_fraction": 0.8260869565217391,
+  "output_video": "sampled.mp4",
+  "output_timing": "VFR: selected frame holds until the next sample; original duration retained",
+  "config": {
+    "analysis_width": 256,
+    "change_budget": 0.08,
+    "min_fps": 1.0,
+    "max_fps": 10.0,
+    "motion_weight": 2.0,
+    "visual_weight": 1.0,
+    "camera_weight": 0.15,
+    "smoothing_seconds": 0.12,
+    "visual_guard": 0.18,
+    "transient_guard": 0.25
+  },
+  "samples": [
+    {
+      "sample_id": 0,
+      "source_frame": 0,
+      "source_time_sec": 0.0,
+      "original_frame": 288,
+      "original_time_sec": 12.0,
+      "hold_until_frame": 7,
+      "hold_duration_sec": 0.2916666666666667,
+      "image": "frames/frame_00000000.jpg",
+      "reason": "first"
+    },
+    {
+      "sample_id": 1,
+      "source_frame": 7,
+      "source_time_sec": 0.2916666666666667,
+      "original_frame": 295,
+      "original_time_sec": 12.291666666666666,
+      "hold_until_frame": 14,
+      "hold_duration_sec": 0.2916666666666667,
+      "image": "frames/frame_00000007.jpg",
+      "reason": "change_budget"
+    },
+    {
+      "sample_id": 2,
+      "source_frame": 14,
+      "source_time_sec": 0.5833333333333334,
+      "original_frame": 302,
+      "original_time_sec": 12.583333333333334,
+      "hold_until_frame": 20,
+      "hold_duration_sec": 0.25,
+      "image": "frames/frame_00000014.jpg",
+      "reason": "change_budget"
+    },
+    {
+      "sample_id": 3,
+      "source_frame": 20,
+      "source_time_sec": 0.8333333333333334,
+      "original_frame": 308,
+      "original_time_sec": 12.833333333333334,
+      "hold_until_frame": 27,
+      "hold_duration_sec": 0.2916666666666667,
+      "image": "frames/frame_00000020.jpg",
+      "reason": "change_budget"
+    },
+    {
+      "sample_id": 4,
+      "source_frame": 27,
+      "source_time_sec": 1.125,
+      "original_frame": 315,
+      "original_time_sec": 13.125,
+      "hold_until_frame": 33,
+      "hold_duration_sec": 0.25,
+      "image": "frames/frame_00000027.jpg",
+      "reason": "change_budget"
+    },
+    {
+      "sample_id": 5,
+      "source_frame": 33,
+      "source_time_sec": 1.375,
+      "original_frame": 321,
+      "original_time_sec": 13.375,
+      "hold_until_frame": 44,
+      "hold_duration_sec": 0.4583333333333333,
+      "image": "frames/frame_00000033.jpg",
+      "reason": "change_budget"
+    },
+    {
+      "sample_id": 6,
+      "source_frame": 44,
+      "source_time_sec": 1.8333333333333333,
+      "original_frame": 332,
+      "original_time_sec": 13.833333333333334,
+      "hold_until_frame": 45,
+      "hold_duration_sec": 0.041666666666666664,
+      "image": "frames/frame_00000044.jpg",
+      "reason": "change_budget"
+    },
+    {
+      "sample_id": 7,
+      "source_frame": 45,
+      "source_time_sec": 1.875,
+      "original_frame": 333,
+      "original_time_sec": 13.875,
+      "hold_until_frame": 46,
+      "hold_duration_sec": 0.041666666666666664,
+      "image": "frames/frame_00000045.jpg",
+      "reason": "last"
+    }
+  ],
+  "validation": {
+    "passed": true,
+    "decoded_frames": 8,
+    "expected_sampled_frames": 8,
+    "exact_sample_timestamps": true,
+    "video_duration_sec": 1.9166666666666667,
+    "video_duration_error_sec": 0.0,
+    "container_duration_error_sec": 0.0,
+    "audio_preserved": true
+  },
+  "comparison_video": "comparison.mp4",
+  "max_hold_seconds": 0.4583333333333333,
+  "processing_seconds": 2.46291363297496
+}

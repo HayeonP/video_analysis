@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>01 · Low frequency events</title><link rel="icon" href="data:,">
+<style>
+:root{color-scheme:dark;--bg:#0d131b;--panel:#151e2a;--line:#2c3a4b;--muted:#9aacc1;--accent:#a6d7ff}
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden}
+body{height:100dvh;display:flex;flex-direction:column;background:var(--bg);color:#e8eef6;font:14px/1.5 system-ui,sans-serif}
+header{flex:none;display:flex;justify-content:space-between;gap:16px;align-items:center;padding:10px 16px;border-bottom:1px solid var(--line)}
+.heading{min-width:0}h1{font-size:18px;margin:0}h2{font-size:15px;margin:0}p{margin:9px 0}.muted{color:var(--muted)}
+#source-name,#result-name,#summary{font-size:11px;white-space:nowrap;text-overflow:ellipsis;overflow:hidden}#analysis-name{overflow-wrap:anywhere}
+.metrics{text-align:right;flex:none;font-size:11px;font-variant-numeric:tabular-nums}.metrics strong{font-size:17px;color:var(--accent);margin-left:8px}
+main{flex:1;min-height:0;display:flex;flex-direction:column;padding:10px 12px 12px;gap:10px}
+.toolbar{flex:none;display:flex;align-items:center;gap:10px;min-width:0}.toolbar-note{flex:1;font-size:12px}.toolbar label{min-width:0}.toolbar select{max-width:100%}
+button,select,input{font:inherit;color:inherit;background:#101925;border:1px solid var(--line);border-radius:6px;padding:6px 9px}button{cursor:pointer}
+button:hover,button.selected{border-color:var(--accent);background:#243b51}button:focus-visible,input:focus-visible,select:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+.workspace{flex:1;min-height:0;display:grid;grid-template-columns:minmax(0,1.65fr) minmax(330px,1fr);gap:12px}
+.media-column{min-width:0;min-height:0;display:grid;grid-template-rows:minmax(0,1.9fr) minmax(120px,1fr);gap:12px}
+.panel{border:1px solid var(--line);border-radius:10px;background:var(--panel);min-width:0;min-height:0;overflow:hidden}
+.media-panel{display:flex;flex-direction:column;padding:10px;gap:7px}
+.video-stage{flex:1;min-height:0;min-width:0;display:flex;align-items:center;justify-content:center;background:#000;border-radius:6px;overflow:hidden}
+.player,.frame{position:relative;background:#000;overflow:hidden;line-height:0}.player{flex:none}video,.frame>img{display:block;width:100%}video{height:100%}
+.overlay{position:absolute;inset:0;pointer-events:none}.box{position:absolute;border:2px solid var(--color)}
+.box span{position:absolute;left:-2px;top:0;background:var(--color);color:#06101b;font-size:11px;line-height:1.4;padding:2px 4px;white-space:nowrap}
+.play-controls{display:flex;align-items:center;gap:8px;flex-wrap:wrap;flex:none;font-size:12px}.play-controls button{padding:5px 8px}.play-controls label{white-space:nowrap}
+#clock{font-variant-numeric:tabular-nums;margin-left:auto}#scrubber{flex:none;width:100%;padding:0;accent-color:var(--accent);margin:0}
+#box-status{flex:none;height:2.6em;margin:0;overflow:hidden;font-size:11px;line-height:1.3}
+.timeline-panel{display:flex;flex-direction:column;padding:10px;gap:6px}.panel-heading{flex:none;display:flex;align-items:center;justify-content:space-between;gap:8px}
+#timeline-selection{font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.timeline-scroll{flex:1;min-height:0;overflow:auto;overscroll-behavior:contain;scrollbar-gutter:stable}
+.timeline{position:relative;border:1px solid var(--line);border-radius:6px;min-height:50px;background:repeating-linear-gradient(90deg,transparent 0,transparent calc(10% - 1px),#ffffff12 calc(10% - 1px),#ffffff12 10%)}
+.bar{position:absolute;height:25px;min-width:8px;font-size:11px;padding:1px 5px;text-align:left;overflow:hidden;white-space:nowrap;background:#2c5575;border-color:#5983a4}
+.bar.selected{background:#87c6f4;color:#102031;outline:2px solid #e2f2ff;outline-offset:-2px}.playhead{position:absolute;top:0;bottom:0;width:2px;background:#fff;pointer-events:none}
+.sidebar{display:flex;flex-direction:column}.tabs{flex:none;display:flex;gap:4px;padding:8px;border-bottom:1px solid var(--line)}.tabs button{flex:1;padding:6px 4px;font-size:12px}
+.tabs button[aria-selected="true"]{background:#243b51;border-color:var(--accent)}
+.sidebar-panel{flex:1;min-height:0;overflow:auto;overscroll-behavior:contain;padding:12px;scrollbar-gutter:stable}
+#events-panel{display:flex;flex-direction:column;overflow:hidden}.search{flex:none;width:100%;margin:10px 0}
+.events{flex:1;min-height:0;overflow:auto;overscroll-behavior:contain;scrollbar-gutter:stable}
+.card{width:100%;text-align:left;display:block;padding:12px;margin:0 0 8px;overflow-wrap:anywhere}.card p{margin:5px 0}.card.selected{box-shadow:inset 3px 0 var(--accent)}
+.badge{font-size:11px;background:#2b3b4e;border-radius:4px;padding:2px 6px}.warning{color:#ffcc86}
+.strip{display:flex;gap:8px;overflow:auto;overscroll-behavior:contain;margin:10px 0}.thumb{flex:0 0 108px;padding:4px;font-size:11px}.thumb img{display:block;width:98px;height:58px;object-fit:contain}
+.entity{padding:10px 0;border-top:1px solid var(--line);overflow-wrap:anywhere}.entity img{width:60px;height:55px;object-fit:contain;background:#000;border-radius:4px}.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.participant{padding:8px;background:#0d1723;border-radius:5px;margin:6px 0}#detail-description{font-size:18px}.empty{color:var(--muted);padding:20px 0}details summary{cursor:pointer}
+[hidden]{display:none!important}
+@media(max-width:760px){header{padding:7px 10px}h1{font-size:15px}.metrics{font-size:10px}.metrics strong{font-size:14px;margin-left:0;display:block}main{padding:7px;gap:7px}.toolbar{font-size:11px;gap:6px}.toolbar-note{display:none}.toolbar label{flex:1}.toolbar select{max-width:65vw}.toolbar button{font-size:11px}.workspace{grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,1.2fr) minmax(0,1fr);gap:7px}.media-column{grid-template-rows:minmax(0,1.7fr) minmax(80px,1fr);gap:7px}.media-panel,.timeline-panel{padding:7px;gap:4px}.play-controls{gap:5px;font-size:10px}.play-controls button{font-size:10px;padding:3px 5px}#box-status{font-size:9px;height:1.3em}.panel-heading h2{font-size:13px}.tabs{padding:5px}.tabs button{padding:4px}.sidebar-panel{padding:8px}#summary{font-size:10px}.card{padding:8px;font-size:12px}}
+</style></head><body>
+<header><div class="heading"><h1>영상 이벤트 뷰어</h1><div id="source-name" class="muted"></div><div id="result-name" class="muted"></div><div id="summary" class="muted"></div></div><div class="metrics">누적 분석 <strong id="elapsed">—</strong><div id="run-status" class="muted"></div></div></header>
+<main>
+<div class="toolbar"><label>이벤트 범위 <select id="window-select" aria-label="이벤트 범위"><option value="all">전체 윈도 · 모든 이벤트</option></select></label><label id="person-filter-label" hidden>인물 <select id="person-filter"><option value="all">모든 인물</option></select></label><span class="toolbar-note muted">영상 고정 · 타임라인과 목록의 선택 위치가 함께 이동합니다.</span><button id="reload">새로고침</button></div>
+<div class="workspace">
+<div class="media-column">
+<section class="panel media-panel"><div class="video-stage" id="video-stage"><div class="player"><video id="video" controls preload="metadata" playsinline></video><div id="video-boxes" class="overlay"></div></div></div>
+<div class="play-controls"><select id="playback-mode" aria-label="재생 영상"><option value="tracking">추적 영상</option><option value="sampled">분석 샘플 영상</option><option value="original">원본 영상</option></select><button id="play-event">이벤트 재생</button><button id="play-window">윈도 재생</button><label><input id="boxes" type="checkbox" checked> bbox</label><span id="clock" class="muted"></span></div>
+<input id="scrubber" type="range" min="0" step="0.001" value="0" aria-label="영상 시간"><p id="box-status" class="muted"></p></section>
+<section class="panel timeline-panel"><div class="panel-heading"><h2>이벤트 타임라인</h2><span id="timeline-selection" class="muted"></span></div><div class="timeline-scroll" id="timeline-scroll" tabindex="0" aria-label="이벤트 타임라인 스크롤 영역"><div id="timeline" class="timeline"></div></div></section>
+</div>
+<aside class="panel sidebar">
+<nav class="tabs" role="tablist" aria-label="분석 정보">
+<button id="tab-narrative" role="tab" aria-controls="narrative-panel" aria-selected="false" tabindex="-1" data-panel="narrative-panel">장면 설명</button>
+<button id="tab-events" role="tab" aria-controls="events-panel" aria-selected="true" data-panel="events-panel">이벤트</button>
+<button id="tab-detail" role="tab" aria-controls="detail-panel" aria-selected="false" tabindex="-1" data-panel="detail-panel">상세</button>
+<button id="tab-frames" role="tab" aria-controls="frame-panel" aria-selected="false" tabindex="-1" data-panel="frame-panel">프레임</button>
+<button id="tab-entities" role="tab" aria-controls="entities-panel" aria-selected="false" tabindex="-1" data-panel="entities-panel">엔티티</button>
+<button id="tab-records" role="tab" aria-controls="records-panel" aria-selected="false" tabindex="-1" data-panel="records-panel">기록</button>
+</nav>
+<section class="sidebar-panel" id="narrative-panel" role="tabpanel" aria-labelledby="tab-narrative" hidden><h2>현재 윈도 · 배경과 행동</h2><div id="narrative"></div></section>
+<section class="sidebar-panel" id="events-panel" role="tabpanel" aria-labelledby="tab-events"><div class="panel-heading"><h2>이벤트 목록</h2><span id="event-count" class="badge"></span></div><input id="search" class="search" type="search" aria-label="이벤트 검색" placeholder="설명, 행동, 엔티티 검색"><div id="event-list" class="events"></div></section>
+<section class="sidebar-panel" id="detail-panel" role="tabpanel" aria-labelledby="tab-detail" hidden><h2>선택한 이벤트 상세</h2><div id="detail" class="empty">이벤트를 선택하세요.</div></section>
+<section class="sidebar-panel" id="frame-panel" role="tabpanel" aria-labelledby="tab-frames" hidden><h2>선택 윈도의 샘플 프레임</h2><p id="window-info" class="muted"></p><p class="muted">P번호는 통합 인물, O번호는 물체, U번호는 동일인 미확정 관찰입니다.</p><div id="all-frames" class="strip"></div><div class="frame"><img id="frame-image" alt="선택한 분석 프레임" hidden><div id="frame-boxes" class="overlay"></div></div><p id="frame-caption" class="muted"></p></section>
+<section class="sidebar-panel" id="entities-panel" role="tabpanel" aria-labelledby="tab-entities" hidden><h2>통합 엔티티 · <span id="entity-count"></span></h2><div id="entity-list"></div></section>
+<section class="sidebar-panel" id="records-panel" role="tabpanel" aria-labelledby="tab-records" hidden><h2>실행 기록</h2><p id="analysis-name" class="muted"></p><div id="sessions"></div><div id="errors"></div><p id="event-policy" class="muted">Stage 1 · 겹치는 윈도 사이의 이벤트도 모두 보존합니다. 시간은 원본 영상의 샘플 관찰 구간이며 bbox는 검출한 프레임에만 표시합니다.</p></section>
+</aside></div></main>
+<script type="application/json" id="data">__DATA__</script><script>
+'use strict';
+const data=JSON.parse(document.getElementById('data').textContent),$=id=>document.getElementById(id),video=$('video');
+const samples=data.video.samples||[];
+const isTracking=()=>$('playback-mode').value==='tracking';
+const playbackSamples=()=>isTracking()?(data.tracking_samples||[]):samples;
+const playbackFPS=()=>isTracking()?data.tracking_fps:data.video.settings.sample_fps;
+const isSampled=()=>$('playback-mode').value!=='original'&&playbackSamples().length>0;
+const videoSource=()=>isTracking()?data.tracking_video_url:isSampled()?data.video.sampled_video_url:data.video_url;
+function sampleAt(t){const frames=playbackSamples();return frames[Math.min(frames.length-1,Math.max(0,Math.floor(t*playbackFPS()+1e-6)))]}
+function sourceTime(){return isSampled()?Math.min(data.video.duration_sec,(sampleAt(video.currentTime)?.time_sec||0)+(video.currentTime-(sampleAt(video.currentTime)?.playback_sec||0))):video.currentTime}
+function playbackTime(t){const frames=playbackSamples();let i=0;while(i+1<frames.length&&frames[i+1].time_sec<=t+1e-6)i++;return frames[i]?.playback_sec||0}
+function frameTime(t){return isSampled()?sampleAt(t)?.time_sec:t}
+let narrativeWindow=null;
+function renderNarrative(t){
+ const eligible=data.windows.filter(w=>w.start_sec<=t&&t<w.end_sec);
+ const w=eligible[eligible.length-1]||data.windows[data.windows.length-1];
+ if(narrativeWindow===w)return;narrativeWindow=w;
+ const panel=$('narrative');panel.replaceChildren();
+ if(!w?.narrative){panel.append(node('p','이 구간의 장면 설명이 없습니다.'));return}
+ panel.append(node('p',`${w.window_id} · ${sec(w.start_sec)}–${sec(w.end_sec)}`,'muted'),node('p',w.narrative.background),node('p',w.narrative.summary));
+ if(data.video.event_scope==='people_and_scene'&&w.analysis){
+  panel.replaceChildren(node('p',`${w.window_id} · ${sec(w.start_sec)}–${sec(w.end_sec)} 구간 전체 요약`,'muted'));
+  panel.append(node('p','이 구간 안의 행동 흐름을 설명합니다. 현재 재생 순간의 행동 판정이 아닙니다.','muted'));
+  for(const a of w.analysis.activities){
+   panel.append(node('p',`${entityLabel(a.entity_id)}: ${a.summary}${a.uncertain?' (확인 필요)':''}`));
+   if(a.observation){const spans=a.observation.intervals.map(r=>`${sec(r.first_observed_sec)}–${sec(r.last_observed_sec)}`).join(', ');panel.append(node('p',`추적 관찰 샘플: ${spans||'없음'} · ${a.observation.observed_frames}/${a.observation.total_frames}프레임 (누락이 화면 밖을 뜻하지는 않습니다)`,'muted'));}
+  }
+  for(const [key,label] of [['background','배경'],['composition','구도·카메라']]){const a=w.analysis[key];panel.append(node('p',`${label}: ${a.summary}${a.uncertain?' (확인 필요)':''}`));}
+ }else if(data.video.window_policy==='independent'&&w.analysis){
+  for(const a of w.analysis.activities){
+   panel.append(node('p',`${entityLabel(a.entity_id)}: ${a.summary}`));
+   const list=node('ul');for(const e of a.events){const start=w.frames[e.start_frame]?.time_sec,end=Math.min(w.end_sec,(w.frames[e.end_frame]?.time_sec??w.end_sec)+.1);list.append(node('li',`${sec(start)}–${sec(end)} · ${e.description}${e.uncertain?' (확인 필요)':''}`));}panel.append(list);
+  }
+ }else{for(const a of w.narrative.activities)panel.append(node('p',`${entityLabel(a.entity_id)}: ${a.description}${a.uncertain?' (확인 필요)':''}`));}
+}
+const entities=new Map(data.entities.map(e=>[e.entity_id,e]));
+function canonical(id){const seen=new Set();while(data.entity_aliases?.[id]&&!seen.has(id)){seen.add(id);id=data.entity_aliases[id]}return id}
+function entityLabel(id){id=canonical(id);const e=entities.get(id);if(e?.kind==='person'&&/^person_\d+$/.test(id)){const n=Number(id.split('_')[1]);return e.identity_status==='uncertain'?`U${n} · 동일인 미확정`:`P${n} · 통합 인물 ${n}`}if(/^object_\d+$/.test(id))return `O${Number(id.split('_')[1])} · ${e?.label||'물체'}${e?.identity_status==='uncertain'?' · 동일성 미확정':''}`;return `${id} · ${e?.label||'대상'}`}
+const windows=new Map(data.windows.map(w=>[w.window_id,w]));
+const allEvents=[...data.events].sort((a,b)=>a.start_sec-b.start_sec||a.end_sec-b.end_sec||a.event_id.localeCompare(b.event_id));
+const colors=['#a5d8ff','#ffcf91','#bfb4ff','#93dfbc','#ffabc9','#c4dd9a'];
+const color=id=>colors[Math.max(0,data.entities.findIndex(e=>e.entity_id===canonical(id)))%colors.length];
+let current=null,selected=null,stopAt=null,currentFrame=null,displayedFrameTime=null;
+const node=(tag,text,cls)=>{const n=document.createElement(tag);if(text!==undefined)n.textContent=text;if(cls)n.className=cls;return n};
+const sec=t=>Number(t).toFixed(3)+'s';
+const durationLabel=e=>e.temporal_basis==='window_summary'?`요약 대상 구간 ${sec(e.duration_sec)}`:e.temporal_basis==='window_activity_summary'?`행동 구간 ${sec(e.duration_sec)}`:e.start_frame===e.end_frame?'단일 샘플 · 지속시간 미확정':`${e.temporal_basis==='sampled_transition_bracket'?'동작 관찰 범위':e.temporal_basis==='sampled_state_chain'?'상태 관찰 구간':'지속'} ${sec(e.duration_sec)}`;
+const poseName=p=>({hand_on_hip:'손이 허리에 있음',hands_on_hips:'양손이 허리에 있음',arms_lowered:'팔이 내려가 있음',arms_raised:'팔이 올라가 있음',arms_extended:'팔을 옆으로 뻗음',arms_bent:'팔을 굽힘',facing_front:'정면',facing_back:'뒷면',facing_side:'측면'})[p]||p;
+const time=t=>{t=Math.max(0,Math.round(t));return `${Math.floor(t/3600).toString().padStart(2,'0')}:${Math.floor(t/60%60).toString().padStart(2,'0')}:${(t%60).toString().padStart(2,'0')}`};
+const name=id=>entities.get(canonical(id))?.label||id;
+function draw(target,observations){target.replaceChildren();if(!$('boxes').checked)return;for(const o of observations){const [x1,y1,x2,y2]=o.bbox,b=node('div',undefined,'box');b.dataset.entityId=canonical(o.entity_id);b.title=canonical(o.entity_id);b.style.cssText=`left:${x1/10}%;top:${y1/10}%;width:${(x2-x1)/10}%;height:${(y2-y1)/10}%;--color:${color(o.entity_id)}`;if(o.identity_uncertain)b.style.borderStyle='dashed';const score=Number.isFinite(o.detection_confidence)?` · 검출 ${o.detection_confidence.toFixed(2)}`:'';b.append(node('span',`${entityLabel(o.entity_id)}${score}${o.identity_uncertain&&entities.get(canonical(o.entity_id))?.identity_status!=='uncertain'?' · 연결 확인 필요':''}`));target.append(b)}}
+function seek(t){video.pause();stopAt=null;const same=!video.seeking&&displayedFrameTime!==null&&Math.abs(displayedFrameTime-t)<.5/data.video.source_fps;if(same)drawVideoBoxes(displayedFrameTime);else{const sampled=(current?.frames||[]).some(f=>Math.abs(f.time_sec-t)<.000001);/* Seek inside the frame: browser microsecond truncation at a fractional PTS can display its predecessor. */video.currentTime=isSampled()?playbackTime(t):(sampled?Math.min(data.video.duration_sec-.000001,t+.25/data.video.source_fps):t);drawVideoBoxes(null)}update(t)}
+function showFrame(frame){if(frame.window_id&&windows.has(frame.window_id)&&current?.window_id!==frame.window_id)renderWindowContext(windows.get(frame.window_id));currentFrame=frame;const image=$('frame-image');image.hidden=false;image.src=frame.image;const observations=(current?.observations||[]).filter(o=>o.frame_index===frame.frame_index);draw($('frame-boxes'),observations);const failed=(current?.frames||[]).find(f=>f.frame_index===frame.frame_index)?.warnings?.length;$('frame-caption').textContent=`${current?.window_id||''} · 프레임 ${frame.frame_index} · ${sec(frame.time_sec)} · bbox ${observations.length}개${failed?' · bbox 검출 실패 — 대상이 없다는 뜻은 아닙니다.':''}`;$('frame-caption').classList.toggle('warning',Boolean(failed));for(const b of $('all-frames').children)b.classList.toggle('selected',Number(b.dataset.index)===frame.frame_index);seek(frame.time_sec)}
+function thumb(frame){const b=node('button',undefined,'thumb'),img=node('img');img.src=frame.image;img.alt=`프레임 ${frame.frame_index}`;b.append(img,node('span',`f${frame.frame_index} · ${sec(frame.time_sec)}`));b.dataset.index=frame.frame_index;b.onclick=()=>showFrame(frame);return b}
+function selectEvent(event){setPanel('events-panel');const source=windows.get(event.window_id);if(current!==source)renderWindowContext(source);selected=event;const detail=$('detail');detail.className='';detail.replaceChildren();detail.append(node('p',event.description));detail.firstChild.id='detail-description';detail.append(node('p',`${event.window_id} · ${event.event_type} / ${event.action}`,'muted'),node('p',`${sec(event.start_sec)} → ${sec(event.end_sec)} · ${durationLabel(event)}`),node('p',event.temporal_basis==='window_summary'?'윈도 전체를 보고 작성한 요약':`프레임 chain: ${event.frame_indices.join(' → ')}`,'muted'));
+const flags=[];if(event.continues_before)flags.push('시작 이전부터 진행: 실제 시작 미관찰');if(event.continues_after)flags.push('끝 이후 지속 가능: 실제 종료 미관찰');if(event.uncertain)flags.push('확인 필요');if(flags.length)detail.append(node('p',flags.join(' · '),'warning'));if(event.boundary_note)detail.append(node('p',event.boundary_note,'muted'));
+for(const id of [...new Set(event.entity_ids.map(canonical))]){const p=node('div',entityLabel(id),'participant');p.dataset.entityId=id;detail.append(p)}
+for(const p of event.participants.filter(p=>!p.entity_ids.length)){detail.append(node('div',`${p.label} · bbox / 동일성 미확인`,'participant'))}
+if(event.temporal_basis==='sampled_transition_bracket')detail.append(node('p','인접 샘플 사이에서 확인한 동작 · 실제 시작/종료는 샘플 사이에 있습니다.','muted'));else if(event.start_frame===event.end_frame&&!['window_activity_summary','window_summary'].includes(event.temporal_basis))detail.append(node('p','단일 샘플 관찰 · 실제 지속시간은 미확정입니다.','muted'));else if(event.temporal_basis==='sampled_state_chain')detail.append(node('p','같은 상태가 확인된 연속 샘플 구간입니다.','muted'));
+if(event.temporal_evidence?.length){const evidence=node('details'),summary=node('summary','프레임별 판정 근거');evidence.append(summary);for(const fact of event.temporal_evidence){const change=(fact.state_before?.length||fact.state_after?.length)?` · ${fact.state_before?.map(poseName).join(', ')||'이전 자세 미확정'} → ${fact.state_after?.map(poseName).join(', ')||'이후 자세 미확정'}`:'';evidence.append(node('p',`${entityLabel(fact.entity_id)} · ${event.temporal_basis==='sampled_transition_bracket'?`f${fact.frame_index-1} → `:''}f${fact.frame_index}: ${fact.description}${change}`,fact.uncertain?'warning':'muted'))}detail.append(evidence)}
+const strip=node('div',undefined,'strip');for(const f of event.evidence)strip.append(thumb(f));detail.append(strip);if(event.evidence.length)showFrame(event.evidence[0]);seek(event.start_sec);mark();revealSelection()}
+// Scroll only the two event panes. scrollIntoView would also move the page
+// and push the video out of view, especially when selecting a late event.
+function revealIn(container,item){if(!item||!container.clientHeight)return;const bounds=container.getBoundingClientRect(),rect=item.getBoundingClientRect(),top=bounds.top+container.clientTop;container.scrollTop+=rect.top-top-(container.clientHeight-rect.height)/2}
+function revealSelection(){revealIn($('event-list'),$('event-list').querySelector('.card.selected'));revealIn($('timeline-scroll'),$('timeline').querySelector('.bar.selected'))}
+function mark(){for(const card of $('event-list').children){const active=card.dataset.id===selected?.event_id;card.classList.toggle('selected',active);card.setAttribute('aria-pressed',String(active))}for(const bar of $('timeline').querySelectorAll('.bar')){const active=bar.dataset.id===selected?.event_id;bar.classList.toggle('selected',active);bar.setAttribute('aria-pressed',String(active))}$('play-event').disabled=!selected;$('timeline-selection').textContent=selected?`${selected.window_id} · ${selected.action}`:''}
+function setPanel(id){for(const panel of document.querySelectorAll('.sidebar-panel'))panel.hidden=panel.id!==id;for(const tab of document.querySelectorAll('.tabs [role="tab"]')){const active=tab.dataset.panel===id;tab.setAttribute('aria-selected',String(active));tab.tabIndex=active?0:-1}if(id==='events-panel')revealSelection()}
+const tabs=[...document.querySelectorAll('.tabs [role="tab"]')];for(const tab of tabs){tab.onclick=()=>setPanel(tab.dataset.panel);tab.onkeydown=event=>{let index=tabs.indexOf(tab);if(event.key==='ArrowRight')index=(index+1)%tabs.length;else if(event.key==='ArrowLeft')index=(index+tabs.length-1)%tabs.length;else if(event.key==='Home')index=0;else if(event.key==='End')index=tabs.length-1;else return;event.preventDefault();setPanel(tabs[index].dataset.panel);tabs[index].focus({preventScroll:true})}}
+function scopedEvents(){const scope=$('window-select').value,person=$('person-filter').value;return allEvents.filter(e=>(scope==='all'||e.window_id===scope||e.window_ids?.includes(scope))&&(person==='all'||e.entity_ids.includes(person)))}
+function renderEvents(){
+ const query=$('search').value.trim().toLocaleLowerCase();
+ const events=scopedEvents().filter(e=>[e.window_id,e.event_type,e.action,e.description,...e.entity_ids,...e.entity_ids.map(entityLabel),...e.entity_ids.map(name),...e.participants.map(p=>p.label)].join(' ').toLocaleLowerCase().includes(query));
+ const list=$('event-list'),timeline=$('timeline');list.replaceChildren();timeline.replaceChildren();$('event-count').textContent=`표시 ${events.length} / 전체 ${allEvents.length}`;
+ events.forEach((e,i)=>{const b=node('button',undefined,'card');b.dataset.id=e.event_id;b.append(node('span',`${sec(e.start_sec)} → ${sec(e.end_sec)} · ${durationLabel(e)}`,'badge'),node('p',e.description),node('span',`${e.window_id} · ${e.action} · f${e.start_frame}–f${e.end_frame}`,'muted'));b.append(node('p',e.entity_ids.map(entityLabel).join(', '),'muted'));if(e.uncertain)b.append(node('span',' · 확인 필요','warning'));b.onclick=()=>selectEvent(e);list.append(b);const bar=node('button',e.action,'bar');bar.dataset.id=e.event_id;bar.style.left=e.start_sec/data.video.duration_sec*100+'%';bar.style.width=Math.max(1,(e.end_sec-e.start_sec)/data.video.duration_sec*100)+'%';bar.style.top=8+i*30+'px';bar.title=`${e.window_id} · ${e.description}`;bar.onclick=()=>selectEvent(e);timeline.append(bar)});
+ timeline.style.height=Math.max(50,events.length*30+15)+'px';const head=node('div',undefined,'playhead');head.id='playhead';timeline.append(head);
+ if(!events.length)list.append(node('p',query?'검색 조건에 맞는 이벤트가 없습니다.':'이 범위에서 추출한 이벤트가 없습니다.','empty'));
+ mark();update(sourceTime());return events;
+}
+function renderWindowContext(window){
+ current=window||null;currentFrame=null;$('frame-panel').dataset.windowId=current?.window_id||'';
+ const list=$('all-frames');list.replaceChildren();for(const f of current?.frames||[])list.append(thumb(f));
+ $('window-info').textContent=current?`${current.window_id} · ${sec(current.start_sec)}–${sec(current.end_sec)} · ${current.frames.length}프레임`:'아직 완료된 윈도가 없습니다.';
+ $('frame-image').hidden=true;$('frame-image').removeAttribute('src');$('frame-boxes').replaceChildren();$('frame-caption').textContent='';$('play-window').disabled=!current;
+}
+function renderEntities(){
+ const scope=windows.get($('window-select').value);
+ const visibleIds=scope?new Set([...scope.observations.map(o=>o.entity_id),...(scope.analysis?.backgrounds||[]).map(b=>b.entity_id),...(scope.analysis?.camera_summary?['camera_0001']:[])]):new Set(entities.keys());
+ $('entity-list').replaceChildren();
+ const unresolved=node('details');let pendingCount=0,personCount=0;
+ for(const id of visibleIds){const e=entities.get(id);if(!e)continue;const row=node('div',undefined,'entity'),title=node('div',undefined,'row');row.dataset.entityId=id;if(e.gallery.length){const img=node('img');img.src=e.gallery[0];img.alt=e.label;title.append(img)}title.append(node('span',entityLabel(id)));row.append(title,node('p',id,'muted'),node('p',e.appearance,'muted'));if(e.identity_status==='uncertain')row.append(node('p',e.kind==='person'?'동일인 미확정 · 별개의 새 사람이라는 뜻은 아닙니다.':'동일성 미확정 · 별개의 새 물체라는 뜻은 아닙니다.','warning'));if(e.possible_matches.length)row.append(node('p','동일성 미확정: '+e.possible_matches.map(entityLabel).join(', '),'warning'));if(e.kind==='person'&&e.identity_status==='uncertain'){pendingCount++;unresolved.append(row)}else{if(e.kind==='person')personCount++;$('entity-list').append(row)}}
+ if(pendingCount){unresolved.prepend(node('summary',`동일인 미확정 관찰 ${pendingCount}개`,'warning'));$('entity-list').append(unresolved)}
+ $('entity-count').textContent=(scope?`선택 윈도 ${visibleIds.size} / 전체 ${data.entities.length}`:`전체 ${data.entities.length}`)+(['person_reid','unified'].includes(data.video.settings.perception)?` · 인물 ${personCount}그룹 / 미확정 ${pendingCount}`:'');
+}
+function renderScope(){
+ selected=null;seek(sourceTime());renderWindowContext(windows.get($('window-select').value)||data.windows[0]);
+ $('detail').replaceChildren(node('p','이벤트를 선택하세요.','empty'));
+ const events=renderEvents();renderEntities();
+ if(events.length)selectEvent(events[0]);else if(current?.frames.length)showFrame(current.frames[0]);
+ if(data.video.event_scope==='people_and_scene')setPanel('narrative-panel');
+}
+function drawVideoBoxes(t){displayedFrameTime=t;const tolerance=.5/data.video.source_fps;const obs=t===null?[]:[...new Map([...(data.tracks||[]).flatMap(f=>f.observations||[]),...data.windows.flatMap(w=>w.observations||[])].filter(o=>Math.abs(o.time_sec-t)<tolerance).map(o=>[canonical(o.entity_id),o])).values()];draw($('video-boxes'),obs);$('box-status').textContent=obs.length?`영상 프레임 ${sec(t)} · bbox 관찰 ${sec(obs[0].time_sec)} · ${obs.length}개`:t===null?'bbox는 오른쪽 프레임 탭에서 확인할 수 있습니다.':`영상 프레임 ${sec(t)} · 이 프레임의 bbox 관찰 없음 · 프레임 탭에서 샘플을 선택하세요.`}
+function update(t){renderNarrative(t);$('clock').textContent=`${sec(t)} / ${sec(data.video.duration_sec)}`;$('scrubber').value=t;const head=$('playhead');if(head)head.style.left=t/data.video.duration_sec*100+'%';if(stopAt!==null&&t>=stopAt){video.pause();stopAt=null}}
+// timeupdate fires too slowly for per-frame geometry. Draw against the decoded
+// frame's mediaTime so sampled boxes never linger over later moving people.
+if(video.requestVideoFrameCallback){const presented=(now,metadata)=>{drawVideoBoxes(frameTime(metadata.mediaTime));update(sourceTime());video.requestVideoFrameCallback(presented)};video.requestVideoFrameCallback(presented)}
+else{video.addEventListener('play',()=>drawVideoBoxes(null));video.addEventListener('seeked',()=>{if(video.paused)drawVideoBoxes(frameTime(video.currentTime))});video.addEventListener('loadeddata',()=>{if(video.paused)drawVideoBoxes(frameTime(video.currentTime))})}
+video.addEventListener('seeking',()=>drawVideoBoxes(null));
+// Size the image area itself to the source aspect ratio so fixed layout and
+// letterboxing around it never shift the bbox overlay relative to the video.
+const stage=$('video-stage'),player=document.querySelector('.player');
+function fitPlayer(){const aspect=data.video.width/data.video.height;const width=Math.min(stage.clientWidth,stage.clientHeight*aspect);player.style.width=width+'px';player.style.height=width/aspect+'px'}
+new ResizeObserver(fitPlayer).observe(stage);fitPlayer();
+if(data.tracking_video_url){$('playback-mode').value='tracking';$('playback-mode').options[0].textContent=`${data.tracking_fps}fps 추적 영상`;}
+else{$('playback-mode').querySelector('[value="tracking"]').remove();$('playback-mode').value=samples.length?'sampled':'original';}
+video.src=videoSource();
+$('playback-mode').onchange=()=>{
+ const t=Number($('scrubber').value),playing=!video.paused;video.pause();
+ video.src=videoSource();
+ video.addEventListener('loadedmetadata',()=>{seek(t);if(playing)video.play().catch(()=>{})},{once:true});
+};$('scrubber').max=data.video.duration_sec;video.addEventListener('timeupdate',()=>update(sourceTime()));video.addEventListener('loadedmetadata',()=>update(sourceTime()));$('scrubber').oninput=()=>seek(Number($('scrubber').value));$('boxes').onchange=()=>{drawVideoBoxes(displayedFrameTime);if(currentFrame)draw($('frame-boxes'),(current?.observations||[]).filter(o=>o.frame_index===currentFrame.frame_index))};
+$('play-event').onclick=()=>{if(!selected)return;seek(selected.start_sec);stopAt=Math.max(selected.end_sec,selected.start_sec+1/data.video.source_fps);video.play().catch(()=>{})};$('play-window').onclick=()=>{if(!current)return;seek(current.start_sec);stopAt=current.end_sec;video.play().catch(()=>{})};$('search').oninput=renderEvents;$('reload').onclick=()=>location.reload();
+for(const w of data.windows){const option=node('option',`${w.window_id} · ${w.start_sec}–${w.end_sec}s`);option.value=w.window_id;$('window-select').append(option)}$('window-select').onchange=renderScope;
+$('summary').textContent=`${data.video.settings.sample_fps}fps · ${data.video.settings.window_sec}s 윈도 / ${data.video.settings.stride_sec}s 간격 · ${data.windows.length}개 윈도 · ${data.events.length}개 이벤트`;
+if(['tracking_review','tracking_ready'].includes(data.status)){document.querySelector('h1').textContent='추적 비교 뷰어';$('analysis-name').title=data.video.review_note||'';}
+$('source-name').textContent=`현재 영상: ${data.video.source.path.split(/[\\/]/).pop()}`;
+$('analysis-name').textContent=`${data.video.settings.perception==='unified'?'YOLO → 사람 SFace·OSNet / 물체 DINOv2 → Qwen':data.video.settings.perception==='person_reid'?'사람 bbox: YOLO · 동일인: 외형·얼굴 비교':'Qwen 단독 분석'} · 결과: ${data.result_name||'이전 생성 파일'}`;
+if(data.video.settings.perception==='unified')$('analysis-name').append(document.createTextNode(` · 이 분석의 검출 기준: 사람 ${data.video.settings.person_confidence}, 기타 물체 ${data.video.settings.object_confidence} (검출 점수는 정답 확률이 아닙니다)`));
+if(data.video.event_extraction==='10fps_nonoverlap_activity'){$('analysis-name').textContent='저장된 추적 ID → Qwen 10fps · 5초 비중첩 행동 요약';$('event-policy').textContent='인물별 행동을 표시합니다. 각 5초 윈도를 독립적으로 설명하며, 한 인물의 여러 행동을 각각 표시합니다.';}
+$('result-name').textContent=`결과: ${data.result_name}`;$('result-name').title=data.result_name;
+function timing(t){$('elapsed').textContent=time(t.total_active_sec||0);const status=t.sessions?.at(-1)?.status||data.status;$('run-status').textContent=`${({running:'분석 중',paused:'일시 중지',complete:'완료',failed:'실패',interrupted:'중단',tracking_ready:'추적 완료 · VLM 미실행'})[status]||status} · ${t.sessions?.length||0}회 실행`;$('sessions').replaceChildren();for(const s of t.sessions||[])$('sessions').append(node('p',`${new Date(s.started_at).toLocaleString()} · ${s.status} · ${time(s.elapsed_sec)}`))}timing(data.timing);
+for(const error of data.errors||[])$('errors').append(node('p',`${error.resolved?'재개 후 해결':'오류'} · 윈도 ${error.window}: ${error.error}`,'warning'));
+for(const window of data.windows)for(const warning of window.warnings||[])$('errors').append(node('p',`${window.window_id} · ${warning}`,'warning'));
+if(['people_only','people_and_scene'].includes(data.video.event_scope)){$('narrative-panel').querySelector('h2').textContent='현재 구간 · 인물별 행동';$('tab-entities').textContent='인물';$('entities-panel').querySelector('h2').firstChild.textContent='인물 · ';$('person-filter-label').hidden=false;for(const e of data.entities.filter(e=>e.kind==='person')){const option=node('option',entityLabel(e.entity_id));option.value=e.entity_id;$('person-filter').append(option)}$('person-filter').onchange=renderEvents;}
+if(data.video.event_scope==='people_and_scene'){$('analysis-name').textContent='저장된 추적 ID → Qwen 10fps · 5초 구간 전체 요약';$('event-policy').textContent='시간 범위는 요약 대상 윈도입니다. 개별 행동의 시작·종료 시각을 뜻하지 않습니다.';$('narrative-panel').querySelector('h2').textContent='윈도 전체 요약 · 인물·배경·구도';$('tab-narrative').textContent='구간 요약';$('play-event').textContent='요약 구간 재생';setPanel('narrative-panel');}
+renderScope();update(sourceTime());
+if(data.status==='tracking_ready'){setPanel('entities-panel');$('summary').textContent=`BoT-SORT ${data.tracking_fps||data.video.settings.tracking_fps}fps · 추적 완료 · VLM 미실행`;$('analysis-name').textContent=`BoT-SORT · 사람 OSNet / 물체 DINOv2 · 결과: ${data.result_name}`;}
+if(data.status==='running')setInterval(()=>fetch('timing.json',{cache:'no-store'}).then(r=>r.json()).then(timing).catch(()=>{}),5000);
+</script></body></html>

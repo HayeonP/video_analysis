@@ -1,0 +1,10 @@
+{
+  "name": "sintel_10s",
+  "source": "sintel_trailer_1080p.mp4",
+  "source_metadata": "sintel_trailer.source.json",
+  "source_interval_sec": [
+    0,
+    10
+  ],
+  "encoding": "H.264 yuv420p / AAC; video duration 10 seconds; audio container padding may add milliseconds"
+}

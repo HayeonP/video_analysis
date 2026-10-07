@@ -1,0 +1,57 @@
+{
+  "coordinate_system": "xyxy normalized 0..1000",
+  "similarity_is_probability": false,
+  "entities": [
+    {
+      "id": "person_0001",
+      "token": "P1",
+      "kind": "person",
+      "label": "인물 1",
+      "appearance": "SFace·OSNet-AIN 비교 대상"
+    }
+  ],
+  "frames": [
+    {
+      "frame_index": 0,
+      "time_sec": 1.0,
+      "observations": []
+    },
+    {
+      "frame_index": 1,
+      "time_sec": 1.666667,
+      "observations": []
+    },
+    {
+      "frame_index": 2,
+      "time_sec": 2.333333,
+      "observations": []
+    },
+    {
+      "frame_index": 3,
+      "time_sec": 3.0,
+      "observations": []
+    },
+    {
+      "frame_index": 4,
+      "time_sec": 3.666667,
+      "observations": []
+    },
+    {
+      "frame_index": 5,
+      "time_sec": 4.333333,
+      "observations": []
+    },
+    {
+      "frame_index": 6,
+      "time_sec": 5.0,
+      "observations": []
+    },
+    {
+      "frame_index": 7,
+      "time_sec": 5.666667,
+      "observations": [
+        {
+          "local_id": "person_0001",
+          "bbox": [
+            193.90034675598145,
+            352.94

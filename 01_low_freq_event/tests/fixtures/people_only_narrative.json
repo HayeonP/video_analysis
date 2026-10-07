@@ -1,0 +1,161 @@
+{
+  "entities": [
+    {
+      "local_id": "entity_0055",
+      "label": "배경",
+      "kind": "environment",
+      "appearance": "파란색과 분홍색 조명이 있는 무대, 뒤쪽에는 학생용 선반과 별 모양 장식이 있는 배경"
+    },
+    {
+      "local_id": "entity_0056",
+      "label": "배경",
+      "kind": "environment",
+      "appearance": "파란색과 분홍색 조명이 있는 무대, 뒤쪽에는 학생용 선반과 별 모양 장식이 있는 배경"
+    },
+    {
+      "local_id": "object_0001",
+      "label": "tie",
+      "kind": "object",
+      "appearance": "YOLO 검출 종류: tie"
+    },
+    {
+      "local_id": "object_0002",
+      "label": "tie",
+      "kind": "object",
+      "appearance": "YOLO 검출 종류: tie"
+    },
+    {
+      "local_id": "object_0003",
+      "label": "tie",
+      "kind": "object",
+      "appearance": "YOLO 검출 종류: tie"
+    },
+    {
+      "local_id": "object_0004",
+      "label": "tie",
+      "kind": "object",
+      "appearance": "YOLO 검출 종류: tie"
+    },
+    {
+      "local_id": "object_0005",
+      "label": "tie",
+      "kind": "object",
+      "appearance": "YOLO 검출 종류: tie"
+    },
+    {
+      "local_id": "object_0006",
+      "label": "tie",
+      "kind": "object",
+      "appearance": "YOLO 검출 종류: tie"
+    },
+    {
+      "local_id": "object_0007",
+      "label": "tie",
+      "kind": "object",
+      "appearance": "YOLO 검출 종류: tie"
+    },
+    {
+      "local_id": "object_0008",
+      "label": "tie",
+      "kind": "object",
+      "appearance": "YOLO 검출 종류: tie"
+    },
+    {
+      "local_id": "object_0009",
+      "label": "tie",
+      "kind": "object",
+      "appearance": "YOLO 검출 종류: tie"
+    },
+    {
+      "local_id": "object_0010",
+      "label": "tie",
+      "kind": "object",
+      "appearance": "YOLO 검출 종류: tie"
+    },
+    {
+      "local_id": "object_0011",
+      "label": "tie",
+      "kind": "object",
+      "appearance": "YOLO 검출 종류: tie"
+    },
+    {
+      "local_id": "object_0012",
+      "label": "tie",
+      "kind": "object",
+      "appearance": "YOLO 검출 종류: tie"
+    },
+    {
+      "local_id": "object_0013",
+      "label": "tie",
+      "kind": "object",
+      "appearance": "YOLO 검출 종류: tie"
+    },
+    {
+      "local_id": "person_0001",
+      "label": "인물 1",
+      "kind": "person",
+      "appearance": "SFace·OSNet-AIN 비교 대상"
+    },
+    {
+      "local_id": "person_0002",
+      "label": "인물 2",
+      "kind": "person",
+      "appearance": "SFace·OSNet-AIN 비교 대상"
+    },
+    {
+      "local_id": "person_0003",
+      "label": "인물 3",
+      "kind": "person",
+      "appearance": "SFace·OSNet-AIN 비교 대상"
+    },
+    {
+      "local_id": "person_0004",
+      "label": "인물 4",
+      "kind": "person",
+      "appearance": "SFace·OSNet-AIN 비교 대상"
+    },
+    {
+      "local_id": "person_0005",
+      "label": "인물 5",
+      "kind": "person",
+      "appearance": "SFace·OSNet-AIN 비교 대상"
+    },
+    {
+      "local_id": "person_0006",
+      "label": "인물 6",
+      "kind": "person",
+      "appearance": "SFace·OSNet-AIN 비교 대상"
+    },
+    {
+      "local_id": "person_0007",
+      "label": "인물 7",
+      "kind": "person",
+      "appearance": "SFace·OSNet-AIN 비교 대상"
+    },
+    {
+      "local_id": "person_0008",
+      "label": "인물 8",
+      "kind": "person",
+      "appearance": "SFace·OSNet-AIN 비교 대상"
+    },
+    {
+      "local_id": "person_0009",
+      "label": "인물 9",
+      "kind": "person",
+      "appearance": "SFace·OSNet-AIN 비교 대상"
+    },
+    {
+      "local_id": "person_0010",
+      "label": "인물 10",
+      "kind": "person",
+      "appearance": "SFace·OSNet-AIN 비교 대상"
+    },
+    {
+      "local_id": "person_0011",
+      "label": "인물 11",
+      "kind": "person",
+      "appearance": "SFace·OSNet-AIN 비교 대상"
+    }
+  ],
+  "response": "{\n  \"background\": \"파란색과 분홍색 조명이 있는 무대 위에 학생용 선반과 별 모양 장식이 있는 배경이 있으며, 무대 조명은 시간에 따라 변화하는 흐름을 보입니다. 무대는 전체적으로 화려하고, 빛의 변화는 무대 위의 인물들을 강조합니다.\",\n  \"summary\": \"현재 배경은 파란색과 분홍색 조명이 있는 무대이며, 인물 1은 무대 위에서 카메라를 향해 미소 짓고 있습니다.\",\n  \"activities\": [\n    {\n      \"entity_id\": \"person_0001\",\n      \"description\": \"무대 위에서 카메라를 향해 미소 짓고 있으며, 몸을 약간 앞으로 내밀고 있습니다.\",\n      \"uncertain\": false\n    },\n    {\n      \"entity_id\": \"person_0002\",\n      \"description\": \"무대 위에서 카메라를 향해 미소 짓고 있으며, 몸을 약간 앞으로 내밀고 있습니다.\",\n      \"uncertain\": false\n    },\n    {\n      \"entity_id\": \"person_0003\",\n      \"description\": \"무대 위에서 카메라를 향해 미소 짓고 있으며, 몸을 약간 앞으로 내밀고 있습니다.\",\n      \"uncertain\": false\n    },\n    {\n      \"entity_id\": \"person_0004\",\n      \"description\": \"무대 위에서 카메라를 향해 미소 짓고 있으며, 몸을 약간 앞으로 내밀고 있습니다.\",\n      \"uncertain\": true\n    },\n    {\n      \"entity_id\": \"person_0005\",\n      \"description\": \"무대 위에서 카메라를 향해 미소 짓고 있으며, 몸을 약간 앞으로 내밀고 있습니다.\",\n      \"uncertain\": true\n    },\n    {\n      \"entity_id\": \"person_0006\",\n      \"description\": \"무대 위에서 카메라를 향해 미소 짓고 있으며, 몸을 약간 앞으로 내밀고 있습니다.\",\n      \"uncertain\": true\n    },\n    {\n      \"entity_id\": \"person_0007\",\n      \"description\": \"무대 위에서 카메라를 향해 미소 짓고 있으며, 몸을 약간 앞으로 내밀고 있습니다.\",\n      \"uncertain\": true\n    },\n    {\n      \"entity_id\": \"person_0008\",\n      \"description\": \"무대 위에서 카메라를 향해 미소 짓고 있으며, 몸을 약간 앞으로 내밀고 있습니다.\",\n      \"uncertain\": false\n    },\n    {\n      \"entity_id\": \"person_0009\",\n      \"description\": \"무대 위에서 카메라를 향해 미소 짓고 있으며, 몸을 약간 앞으로 내밀고 있습니다.\",\n      \"uncertain\": true\n    },\n    {\n      \"entity_id\": \"person_0010\",\n      \"description\": \"무대 위에서 카메라를 향해 미소 짓고 있으며, 몸을 약간 앞으로 내밀고 있습니다.\",\n      \"uncertain\": false\n    },\n    {\n      \"entity_id\": \"person_0011\",\n      \"description\": \"무대 위에서 카메라를 향해 미소 짓고 있으며, 몸을 약간 앞으로 내밀고 있습니다.\",\n      \"uncertain\": true\n    }\n  ]\n}"
+}
