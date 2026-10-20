@@ -74,7 +74,7 @@ python3 run.py analyze "/영상/경로/example.mp4"
 # 생성 파일: outputs/sintel/viewer.html — 브라우저에서 열기
 
 # 다른 위치에 저장하거나 원본 영상이 이동했을 때
-./visualize.sh outputs/sintel --output outputs/review/index.html --video videos/sintel_trailer_1080p.mp4
+./visualize.sh outputs/sintel --output outputs/review/index.html --video /absolute/path/to/video.mp4
 ```
 
 - **이벤트 목록:** 설명, 시간, 행동 주체·대상을 표시한다. 클릭하면 원본 영상을 이벤트 시작 시점으로 이동하고 일시정지한다. 검색·대상·종류·확인 필요 여부로 필터링할 수 있다.
@@ -130,7 +130,7 @@ ssh -N -L 5000:127.0.0.1:5000 사용자@서버주소
 
 기본 입력은 실행 스크립트가 있는 프로젝트의 `outputs/sintel`, 생성 파일은 `outputs/sintel/first_round.html`이다. 포트 5001은 기존 최종 결과 서버의 5000과 구분된다. `--port 5002` 등으로 변경할 수 있고 `Ctrl+C`로 종료한다. `--output`으로 HTML을 다른 곳에 저장할 수 있지만 서버에서 열 페이지는 프로젝트 폴더 안에 있어야 한다. 외부 경로에 HTML만 저장하려면 `--generate-only`를 사용한다.
 
-프로젝트와 영상을 함께 옮겼다면 1차·최종 뷰어 모두 저장된 상대 경로 또는 현재 프로젝트의 같은 경로 끝부분(예: `videos/영상.mp4`)에서 원본을 자동으로 찾는다. 저장된 크기·SHA-256이 있으면 일치 여부를 검사하며, 분석 JSON은 수정하지 않는다. 후보가 없거나 여러 개면 `--video`로 정확한 파일을 지정한다. 프로젝트가 `prototype/` 안에 있다면 해당 폴더에서 실행하거나 `./prototype/first_round_visualize.sh`처럼 실행 스크립트 경로를 지정한다.
+프로젝트와 영상을 함께 옮겼다면 1차·최종 뷰어 모두 저장된 상대 경로 또는 현재 프로젝트의 같은 경로 끝부분(예: `/path/to/video.mp4`)에서 원본을 자동으로 찾는다. 저장된 크기·SHA-256이 있으면 일치 여부를 검사하며, 분석 JSON은 수정하지 않는다. 후보가 없거나 여러 개면 `--video`로 정확한 파일을 지정한다. 프로젝트가 `prototype/` 안에 있다면 해당 폴더에서 실행하거나 `./prototype/first_round_visualize.sh`처럼 실행 스크립트 경로를 지정한다.
 
 **모델 호출·GPU 사용·영상 디코딩 없이 저장된 기록만 읽는다.** 이벤트는 `candidates.json`의 1차 병합 후보를 그대로 사용한다. Sintel의 경우 52개이며, 이 중 20개가 23초 이전에 시작한다. 최종 9개 이벤트나 정밀 분석의 빈 이벤트 배열을 사용하지 않는다. 1차 후보가 저장되어 있다면 정밀 분석이 완료되기 전에도 생성할 수 있다.
 

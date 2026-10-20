@@ -3,9 +3,10 @@ set -euo pipefail
 PROJECT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 export PYTHONNOUSERSITE=1
 unset PYTHONHOME PYTHONPATH
-export HF_HOME="$PROJECT_DIR/.cache/huggingface"
+# Share the standard cache between stages and respect an explicit override.
+export HF_HOME="${HF_HOME:-${XDG_CACHE_HOME:-$HOME/.cache}/huggingface}"
 export HF_HUB_DISABLE_TELEMETRY=1
-export YOLO_CONFIG_DIR="$PROJECT_DIR/.cache/ultralytics"
+export YOLO_CONFIG_DIR="${YOLO_CONFIG_DIR:-$PROJECT_DIR/.cache/ultralytics}"
 export TOKENIZERS_PARALLELISM=false
 export CUDA_DEVICE_ORDER=PCI_BUS_ID
 mkdir -p "$YOLO_CONFIG_DIR"

@@ -4,27 +4,23 @@ TransNetV2로 하드 컷·페이드·디졸브를 검출하고, **원본의 모�
 
 ## 전체 예고편 결과
 
-- 원본: `videos/sintel_trailer_full.mp4` — Sintel 예고편, 24fps, 1,253프레임, 52.208333초
-- 현재 결과: **`outputs/sintel_trainler_full/shots/` — 17개 MP4**
-- 경계 목록: `outputs/sintel_trainler_full/shots.csv`
-- 디코딩 검증: `outputs/sintel_trainler_full/validation.json`
-- 원본 프레임 대조 검증: `outputs/sintel_trainler_full/timeline_audit.json`
+예전 Sintel 샘플 실행 결과는 로컬 실험 기록이며 저장소에는 포함하지 않습니다. 실행할 때 본인이 준비한 입력 영상을 지정하세요.
 
 예전에 사용한 `clean_shots` 방식은 전환 구간을 삭제했습니다. 현재 기본 방식은 `contiguous`이며 전환·검은 화면·짧은 조각을 포함한 원본 전체를 보존합니다. 이전 누락본과 검증 보고서는 `outputs/archive/`에 보관합니다.
 
 ## 실행
 
 ```bash
-cd ~/HayeonP/video_analysis/02_shot_boundary_detection
+cd /path/to/3r_video/02_shot_boundary_detection
 
 # 전체 예고편을 새 결과 폴더에 저장
-./run.sh videos/sintel_trailer_full.mp4 --output outputs/full_new
+./run.sh /absolute/path/to/video.mp4 --output outputs/full_new
 
 # 다른 영상
 ./run.sh /path/to/video.mp4 --output outputs/my_video
 
-# 기본 30초 샘플 다운로드 및 처리
-./run.sh --output outputs/demo_new
+# 직접 지정한 영상 처리
+./run.sh /absolute/path/to/video.mp4 --output outputs/demo_new
 ```
 
 기존 폴더는 덮어쓰지 않습니다. `run.sh`가 필요하면 환경을 설치하며, 첫 TransNetV2 실행에서 약 30 MB 가중치를 다운로드합니다.
@@ -41,11 +37,11 @@ cd ~/HayeonP/video_analysis/02_shot_boundary_detection
 
 ```bash
 # 전환 검출 민감도 조정
-./run.sh videos/sintel_trailer_full.mp4 \
+./run.sh /absolute/path/to/video.mp4 \
   --threshold 0.4 --min-shot-seconds 0.25 --output outputs/sensitive
 
 # PySceneDetect AdaptiveDetector와 비교
-./run.sh videos/sintel_trailer_full.mp4 \
+./run.sh /absolute/path/to/video.mp4 \
   --detector adaptive --threshold 3.0 --output outputs/adaptive_compare
 ```
 

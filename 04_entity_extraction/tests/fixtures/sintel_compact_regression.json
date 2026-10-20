@@ -1,0 +1,45 @@
+{
+  "scope": "Evaluation-only manually inspected selected crops; no runtime input. Frozen before v6 model output.",
+  "source": "/home/hayeon/3r_video/04_entity_extraction/outputs/sintel_sampled_20261013_174933_902839/entities",
+  "observations": [
+    {
+      "id": "hero_close",
+      "identity": "protagonist",
+      "shot_id": "shot_0005",
+      "frame": 23,
+      "bbox": [
+        215.25,
+        132.75,
+        1175.25,
+        945.0
+      ],
+      "crop": "dense_tracking/crops/shot_0005/T0001_f00000023.jpg"
+    },
+    {
+      "id": "hero_fight",
+      "identity": "protagonist",
+      "shot_id": "shot_0006",
+      "frame": 11,
+      "bbox": [
+        795.0,
+        144.75,
+        1908.0,
+        946.5
+      ],
+      "crop": "dense_tracking/crops/shot_0006/T0005_f00000011.jpg"
+    },
+    {
+      "id": "attacker_fight",
+      "identity": "bald_attacker",
+      "shot_id": "shot_0006",
+      "frame": 13,
+      "bbox": [
+        948.0,
+        184.5,
+        1680.0,
+        952.5
+      ],
+      "crop": "dense_tracking/crops/shot_0006/T0005_f00000013.jpg"
+    }
+  ]
+}

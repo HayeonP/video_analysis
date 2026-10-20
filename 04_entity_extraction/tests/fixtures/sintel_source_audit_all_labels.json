@@ -1,0 +1,37 @@
+{
+  "source": "Independent partial source-frame identity audit, 2026-10-13. New labels were frozen before inspecting new local/global identities; box coordinates are manually estimated from source pixels. Evaluation only; never inference input.",
+  "scope": "Core plus2 distant desert appearances; tiny-identity result is separate from core",
+  "groups": [
+    {
+      "name": "protagonist",
+      "kind": "person",
+      "ids": [
+        "S003_002",
+        "S005_001",
+        "S011_001",
+        "P_S02",
+        "P_S06",
+        "P_S07",
+        "P_S08",
+        "P_S12",
+        "P_S14",
+        "S015_001"
+      ]
+    },
+    {
+      "name": "older_man",
+      "kind": "person",
+      "ids": [
+        "S004_001"
+      ]
+    },
+    {
+      "name": "bald_attacker",
+      "kind": "person",
+      "ids": [
+        "ATTACKER_S06"
+      ]
+    }
+  ],
+  "ambiguous_ids": []
+}

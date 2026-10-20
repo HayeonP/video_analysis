@@ -3,7 +3,11 @@
 import argparse
 import json
 import mimetypes
+import os
 import re
+import shutil
+import subprocess
+import threading
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import urlsplit
@@ -14,7 +18,9 @@ DOWNLOADS = ("entities.json", "story.json", "quality.json", "tracking_summary.js
              "entity_shot_presence.csv", "entity_shot_presence.json", "shot_entities.json",
              "REPORT.html", "REPORT.md", "RESULT_REPORT.md", "entity_gallery.jpg", "qwen_budget.json",
              "detector_summary.json", "duplicate_observations.json", "observation_fusion.json",
-             "track_fusion.json", "anchored/quality.json", "anchored/coverage.json")
+             "track_fusion.json", "run_timing.json", "requested_context_validation.json",
+             "context_reassignment/person.json", "context_reassignment/animal.json", "shot_memory/memory.json",
+             "anchored/quality.json", "anchored/coverage.json")
 
 
 def read_json(path):
@@ -60,7 +66,7 @@ def normalize_shots(timeline, story):
             duration = max(0.0, end - start) if end >= 0 else 0.0
         shots.append({"id": shot_id, "full_start_sec": start, "duration_sec": duration,
                       "end_sec": start + duration, **{key: detail.get(key, source.get(key)) for key in
-                       ("summary", "initial_summary", "events", "entities", "uncertainties", "status")}})
+                       ("summary", "initial_summary", "events", "entities", "uncertainties", "status", "transition", "transition_evidence")}})
         cursor = start + duration
     return shots
 
@@ -72,6 +78,21 @@ def collect_results(root):
     current_guide = method_slides if method_slides.is_file() else text_guide
     routes = {"/": PROJECT / "viewer.html", "/guide": current_guide,
               "/slides": current_guide, "/guide-text": text_guide}
+    for url, relative in (
+        ("/model-flow", "MODEL_FLOW_SIMPLE.html"),
+        ("/analysis-guide", "CURRENT_ANALYSIS_DETAILED_REPORT.html"),
+        ("/CURRENT_ANALYSIS_DETAILED_REPORT.html", "CURRENT_ANALYSIS_DETAILED_REPORT.html"),
+        ("/context-guide", "CONTEXT_ANALYSIS_REPORT.html"),
+        ("/context-guide.pdf", "CONTEXT_ANALYSIS_REPORT.pdf"),
+        ("/analysis-guide.pdf", "CURRENT_ANALYSIS_DETAILED_REPORT.pdf"),
+        ("/model-flow.pdf", "MODEL_FLOW_SIMPLE.pdf"),
+        ("/architecture", "PIPELINE_STUDY_REPORT.html"),
+        ("/architecture.pdf", "PIPELINE_STUDY_REPORT.pdf"),
+        ("/PIPELINE_STUDY_REPORT.pdf", "PIPELINE_STUDY_REPORT.pdf"),
+        ("/assets/pipeline_study_architecture.svg", "assets/pipeline_study_architecture.svg"),
+    ):
+        if (PROJECT / relative).is_file():
+            routes[url] = PROJECT / relative
     korean_font = PROJECT / "assets/NanumGothic-Regular.ttf"
     if korean_font.is_file():
         routes["/assets/NanumGothic-Regular.ttf"] = korean_font
@@ -80,7 +101,16 @@ def collect_results(root):
         routes["/slides.pdf"] = method_pdf
     if (PROJECT / "ENTITY_EXTRACTION_SLIDES.html").is_file():
         routes["/slides-legacy"] = PROJECT / "ENTITY_EXTRACTION_SLIDES.html"
-    data = {"name": root.name, "modes": [], "comparison": None, "guide": "/guide"}
+    data = {"name": root.parent.name if root.name == "entities" else root.name, "modes": [], "comparison": None, "guide": "/guide"}
+    if (root / "IDENTITY_HISTORY.html").is_file():
+        routes["/identity-history"] = root / "IDENTITY_HISTORY.html"
+        data["identity_history"] = "/identity-history"
+    if (root / "LEGACY_IDENTITY_HISTORY.html").is_file():
+        routes["/legacy-identity-history"] = root / "LEGACY_IDENTITY_HISTORY.html"
+        data["legacy_identity_history"] = "/legacy-identity-history"
+    if (root / "REPAIR_REPORT.html").is_file():
+        routes["/repair-report"] = root / "REPAIR_REPORT.html"
+        data["repair_report"] = "/repair-report"
     root_report = root / "REPORT.html"
     if root_report.is_file() and root_report.resolve().is_relative_to(root):
         routes["/guide"] = routes["/report"] = root_report
@@ -263,11 +293,33 @@ def handler_for(routes, payload):
     return Handler
 
 
+def open_viewer_browser(host, port):
+    """Ask the connected VS Code client to resolve and open a remote URL."""
+    # localhost lets VS Code resolve the URL through its tunnel provider.
+    url = f'http://localhost:{port}' if host in ('127.0.0.1', '0.0.0.0', 'localhost') else f'http://{host}:{port}'
+    code = shutil.which('code')
+    if not code or not os.environ.get('VSCODE_IPC_HOOK_CLI'):
+        print('자동 열기: VS Code Remote 터미널에서 실행해야 합니다. 접속 주소: ' + url, flush=True)
+        return
+    try:
+        result = subprocess.run([code, '--openExternal', url], capture_output=True,
+                                text=True, timeout=20)
+        if result.returncode:
+            print('VS Code 브라우저 열기 요청 실패: ' + (result.stderr or result.stdout).strip(), flush=True)
+        else:
+            print('VS Code에 포트 전달 및 브라우저 열기를 요청했습니다. '
+                  '화면이 열리지 않으면 VS Code 원격 연결을 다시 연결하세요.', flush=True)
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        print(f'VS Code 브라우저 열기 요청 실패: {exc}', flush=True)
+
+
 def main():
     parser = argparse.ArgumentParser(description="Entity 결과 웹 뷰어 (VS Code 포트 전달 지원)")
     parser.add_argument("output", nargs="?", type=Path, help="결과 폴더; 생략 시 최근 완료한 분석")
     parser.add_argument("--host", default="127.0.0.1")
     parser.add_argument("--port", type=int, default=5004)
+    parser.add_argument('--open-browser', action=argparse.BooleanOptionalAction, default=False,
+                        help='VS Code Remote 클라이언트에 브라우저 열기 요청')
     args = parser.parse_args()
     try:
         if args.output is None:
@@ -280,8 +332,12 @@ def main():
     except (OSError, ValueError, KeyError) as exc:
         parser.exit(1, f"뷰어 시작 실패: {exc}\n포트가 사용 중이면 --port로 다른 포트를 지정하세요.\n")
     print(f"Entity viewer: http://{args.host}:{args.port}", flush=True)
+    if "/architecture" in routes:
+        print(f"전체 구조 학습 보고서: http://{args.host}:{args.port}/architecture", flush=True)
     print(f"VS Code → 포트(Ports) → {args.port} 전달 → 브라우저에서 열기", flush=True)
     print(f"결과: {args.output}\n결과를 다시 분석한 뒤에는 뷰어를 재시작하세요. 종료: Ctrl+C", flush=True)
+    if args.open_browser:
+        threading.Thread(target=open_viewer_browser, args=(args.host, args.port), daemon=True).start()
     try:
         server.serve_forever()
     except KeyboardInterrupt:

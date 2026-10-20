@@ -136,31 +136,46 @@ def _compatible_detector_cache(output, weights, detector_config, requested_key):
 
 
 def _resolve_video(raw, metadata, source):
-    path = Path(raw).expanduser()
-    candidates = [path] if path.is_absolute() else [metadata.parent / path, source / path, Path.cwd() / path]
-    for candidate in candidates:
-        if candidate.is_file():
-            return candidate.resolve()
-    raise FileNotFoundError(f'Original shot video is unavailable: {raw}; metadata: {metadata}')
+    from input_media import resolve_media_path
+    return resolve_media_path(raw, metadata, source)
 
 
-def discover_shots(source):
+def discover_shots(source, *, original_video=None, cache_dir=None):
     """Read stage-03 metadata; raw pre-cut videos are also supported."""
     import av
     source = Path(source).expanduser().resolve()
     summary_path = source / 'summary.json' if source.is_dir() else None
     rows = []
+    materializers = {}
+    original_digests = {}
     if summary_path is not None and summary_path.is_file():
         summary = read_json(summary_path)
         for item in summary['videos']:
             metadata = source / item['samples']
             meta = read_json(metadata)
-            video = _resolve_video(meta['source'], metadata, source)
+            recovered = False
+            try:
+                video = _resolve_video(meta['source'], metadata, source)
+            except FileNotFoundError:
+                from input_media import ShotMaterializer
+                original = original_video
+                if original is None and meta.get('original_video'):
+                    original = _resolve_video(meta['original_video'], metadata, source)
+                if original is None:
+                    raise
+                original = Path(original).expanduser().resolve()
+                if original not in materializers:
+                    materializers[original] = ShotMaterializer(original, cache_dir or source / '.recovered_media')
+                materializer = materializers[original]
+                video = materializer.recover(meta)
+                recovered = True
             rows.append(dict(shot_id=item['id'], source=str(video), metadata=str(metadata),
                              fps=float(Fraction(meta['source_fps'])), frame_count=int(meta['source_frames']),
                              original_start_frame=int(meta.get('original_start_frame', 0)),
                              original_fps=float(Fraction(meta.get('original_fps', meta['source_fps']))),
-                             original_video=meta.get('original_video', str(video)),
+                             original_video=str(materializer.video) if recovered else meta.get('original_video', str(video)),
+                             source_metadata={key:meta[key] for key in ('source_sha256','source_fps','source_frames',
+                                 'original_start_frame','original_fps','output_timing') if key in meta},
                              adaptive_frames=[int(s['source_frame']) for s in meta.get('samples', [])],
                              adaptive_samples=meta.get('samples', []), source_sha256=_file_digest(video)))
     else:
@@ -178,6 +193,11 @@ def discover_shots(source):
         if not re.fullmatch(r'[A-Za-z0-9_-]+', row['shot_id']) or row['shot_id'] in seen:
             raise ValueError(f'Unsafe or duplicate shot ID: {row["shot_id"]}')
         seen.add(row['shot_id'])
+        original_path=Path(original_video or row.get('original_video',row['source'])).expanduser()
+        if original_path.is_file():
+            original_path=original_path.resolve()
+            if original_path not in original_digests:original_digests[original_path]=_file_digest(original_path)
+            row['original_sha256']=original_digests[original_path]
         with av.open(row['source']) as container:
             stream = container.streams.video[0]
             rate = float(stream.average_rate or stream.base_rate or 0)
@@ -403,6 +423,9 @@ def _materialize_assets(shot, output, config):
     import numpy as np
     uniform = {int(round(v)) for v in np.linspace(0, shot['frame_count'] - 1,
                                                 min(config.scene_frames, shot['frame_count']))}
+    if shot.get('analysis_frames') == 'sampled':
+        frames = shot['adaptive_frames']
+        uniform = {frames[round(i)] for i in np.linspace(0, len(frames)-1, min(config.scene_frames,len(frames)))}
     by_frame = defaultdict(list)
     wanted = uniform | set(shot['adaptive_frames'])
     for track in shot['tracks']:
@@ -411,31 +434,26 @@ def _materialize_assets(shot, output, config):
             by_frame[obs['frame']].append(obs)
     scenes = []
     saved = set()
-    with av.open(shot['source']) as container:
-        stream = container.streams.video[0]
-        stream.codec_context.thread_count = 2
-        for index, frame in enumerate(container.decode(stream)):
-            if index not in wanted:
-                continue
-            image = frame.to_image().convert('RGB')
-            image_rel = f'dense_tracking/frames/{shot["shot_id"]}/f{index:08d}.jpg'
-            destination = output / image_rel
+    from sampled_frames import iter_shot_images
+    for index, image in iter_shot_images(shot, wanted):
+        image_rel = f'dense_tracking/frames/{shot["shot_id"]}/f{index:08d}.jpg'
+        destination = output / image_rel
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        image.save(destination, quality=94)
+        saved.add(index)
+        if index in uniform:
+            scenes.append(dict(frame=index, source_frame=index, time_sec=index / shot['fps'],
+                               original_time_sec=shot['original_start_frame'] / shot['original_fps'] + index / shot['fps'],
+                               image=image_rel))
+        for obs in by_frame[index]:
+            crop_rel = f'dense_tracking/crops/{shot["shot_id"]}/{obs["track_id"].split(":")[-1]}_f{index:08d}.jpg'
+            destination = output / crop_rel
             destination.parent.mkdir(parents=True, exist_ok=True)
-            image.save(destination, quality=94)
-            saved.add(index)
-            if index in uniform:
-                scenes.append(dict(frame=index, source_frame=index, time_sec=index / shot['fps'],
-                                   original_time_sec=shot['original_start_frame'] / shot['original_fps'] + index / shot['fps'],
-                                   image=image_rel))
-            for obs in by_frame[index]:
-                crop_rel = f'dense_tracking/crops/{shot["shot_id"]}/{obs["track_id"].split(":")[-1]}_f{index:08d}.jpg'
-                destination = output / crop_rel
-                destination.parent.mkdir(parents=True, exist_ok=True)
-                x1, y1, x2, y2 = obs['bbox']
-                image.crop((int(x1), int(y1), math.ceil(x2), math.ceil(y2))).save(destination, quality=96)
-                obs['image'], obs['crop'] = image_rel, crop_rel
-                if obs.get('_feature'):
-                    obs['feature'] = obs['_feature']
+            x1, y1, x2, y2 = obs['bbox']
+            image.crop((int(x1), int(y1), math.ceil(x2), math.ceil(y2))).save(destination, quality=96)
+            obs['image'], obs['crop'] = image_rel, crop_rel
+            if obs.get('_feature'):
+                obs['feature'] = obs['_feature']
     if saved != wanted:
         raise ValueError(f'Could not materialize requested frames in {shot["shot_id"]}: {sorted(wanted - saved)}')
     shot['scene_frames'] = scenes
@@ -457,7 +475,7 @@ def _assets_valid(bundle, output):
 
 
 def build_dense_tracks(source: Path, output: Path, *, model='yolo11x.pt', device='cuda:0', force=False,
-                       config: DenseTrackingConfig | dict | None = None):
+                       config: DenseTrackingConfig | dict | None = None, original_video=None, analysis_frames="dense"):
     """Build/reuse dense detector cache and class-agnostic, per-shot BoT-SORT tracks."""
     import av
     import numpy as np
@@ -469,11 +487,14 @@ def build_dense_tracks(source: Path, output: Path, *, model='yolo11x.pt', device
     config = DenseTrackingConfig(**config) if isinstance(config, dict) else config or DenseTrackingConfig()
     output = Path(output).expanduser().resolve()
     output.mkdir(parents=True, exist_ok=True)
-    shots = discover_shots(source)
+    from sampled_frames import discover_sampled_shots, iter_shot_images, SparseTracker
+    shots = (discover_sampled_shots(source) if analysis_frames == 'sampled' else
+             discover_shots(source, original_video=original_video, cache_dir=output / 'input_media'))
     weights = _weights_path(model)
     detector_config = {key: value for key, value in asdict(config).items()
                        if key.startswith(('detector_', 'appearance', 'tile_'))}
     detector_key = _digest(dict(version=DETECTOR_CACHE_VERSION, weights=_file_digest(weights), config=detector_config))
+    if analysis_frames=='sampled':detector_key=_digest(dict(sampled_version=1,key=detector_key))
     bundle_key = _digest(dict(version=VERSION, shots=shots, detector=detector_key, config=asdict(config)))
     bundle_path = output / 'dense_tracking' / 'bundle.json'
     if bundle_path.is_file() and not force:
@@ -481,7 +502,7 @@ def build_dense_tracks(source: Path, output: Path, *, model='yolo11x.pt', device
         if cached.get('fingerprint') == bundle_key and _assets_valid(cached, output):
             LOG.info('[CACHE HIT] dense original-frame tracking: %d shots', len(cached['shots']))
             return cached
-    detector_cache_key = _compatible_detector_cache(output, weights, detector_config, detector_key)
+    detector_cache_key = detector_key if analysis_frames=='sampled' else _compatible_detector_cache(output, weights, detector_config, detector_key)
     started = time.perf_counter()
     detector = encoder = None
     totals = Counter()
@@ -497,94 +518,94 @@ def build_dense_tracks(source: Path, output: Path, *, model='yolo11x.pt', device
                     built_shots.append(cached)
                     totals.update(cached['stats'])
                     continue
-            LOG.info('[DENSE %d/%d] %s: %d original frames, %.3f fps', shot_number, len(shots),
+            LOG.info('[TRACK %d/%d] %s: %d source frames, %.3f fps', shot_number, len(shots),
                      shot['shot_id'], shot['frame_count'], shot['fps'])
-            tracker = make_tracker(shot['fps'], config)
+            tracker = (SparseTracker(shot['fps'], config) if analysis_frames == 'sampled' else make_tracker(shot['fps'], config))
             groups = defaultdict(list)
             candidates = []
             frame_stats = Counter()
             decoded = 0
             previous_tiny = False
             cache_root = output / 'dense_tracking' / 'cache' / detector_cache_key / shot['source_sha256']
-            with av.open(shot['source']) as container:
-                stream = container.streams.video[0]
-                stream.codec_context.thread_count = 2
-                for index, frame in enumerate(container.decode(stream)):
-                    if index >= shot['frame_count']:
-                        raise ValueError(f'More original frames than metadata declares: {shot["shot_id"]}')
-                    image = frame.to_image().convert('RGB')
-                    if image.size != (shot['width'], shot['height']):
-                        raise ValueError(f'Frame size changed inside shot {shot["shot_id"]}')
-                    cache_path = cache_root / f'f{index:08d}.json'
-                    if not force and cache_path.is_file():
-                        cached = read_json(cache_path)
-                        rows = cached['detections']
-                        frame_stats['detector_cache_frames'] += 1
-                        frame_stats['tile_passes'] += cached.get('tile_passes', 0)
-                    else:
-                        if detector is None:
-                            LOG.info('Loading dense detector: %s on %s', weights.name, device)
-                            detector = YOLO(str(weights))
-                        rows = _predict(detector, image, config, device)
-                        tile_calls = 0
-                        tiny = any((r['bbox'][3] - r['bbox'][1]) / image.height < config.tile_target_height_ratio
-                                   and r['confidence'] >= config.high_confidence for r in rows)
-                        if config.tile_enabled and (index % config.tile_probe_stride == 0 or tiny or previous_tiny):
-                            for rect in _tiles(image.width, image.height, config):
-                                if rect == (0, 0, image.width, image.height):
-                                    continue
-                                rows.extend(_predict(detector, image.crop(rect), config, device, rect=rect, full_size=image.size))
-                                tile_calls += 1
-                        rows = fuse_duplicate_boxes(rows)
-                        if config.appearance and rows:
-                            if encoder is None:
-                                LOG.info('Loading generic tracking appearance encoder: %s', config.appearance_model)
-                                encoder = DinoEncoder(config, device)
-                            for row, feature in zip(rows, encoder(image, rows)):
-                                row['feature'] = feature
-                        atomic_json(cache_path, dict(frame=index, detections=rows, tile_passes=tile_calls,
-                                                     appearance_revision=getattr(encoder, 'revision', None)))
-                        frame_stats['detector_inferred_frames'] += 1
-                        frame_stats['tile_passes'] += tile_calls
-                    previous_tiny = any((r['bbox'][3] - r['bbox'][1]) / image.height < config.tile_target_height_ratio
-                                        and r['confidence'] >= config.high_confidence for r in rows)
+            from tqdm.auto import tqdm
+            expected = len(shot['adaptive_frames']) if analysis_frames == 'sampled' else shot['frame_count']
+            for index, image in tqdm(iter_shot_images(shot), total=expected,
+                                     desc=f"검출 {shot_number}/{len(shots)} {shot['shot_id']}", unit='frame'):
+                if image.size != (shot['width'], shot['height']):
+                    raise ValueError(f'Frame size changed inside shot {shot["shot_id"]}')
+                cache_path = cache_root / f'f{index:08d}.json'
+                if not force and cache_path.is_file():
+                    cached = read_json(cache_path)
+                    rows = cached['detections']
+                    frame_stats['detector_cache_frames'] += 1
+                    frame_stats['tile_passes'] += cached.get('tile_passes', 0)
+                else:
+                    if detector is None:
+                        LOG.info('Loading dense detector: %s on %s', weights.name, device)
+                        detector = YOLO(str(weights))
+                    rows = _predict(detector, image, config, device)
+                    tile_calls = 0
+                    tiny = any((r['bbox'][3] - r['bbox'][1]) / image.height < config.tile_target_height_ratio
+                               and r['confidence'] >= config.high_confidence for r in rows)
+                    if config.tile_enabled and (index % config.tile_probe_stride == 0 or tiny or previous_tiny):
+                        for rect in _tiles(image.width, image.height, config):
+                            if rect == (0, 0, image.width, image.height):
+                                continue
+                            rows.extend(_predict(detector, image.crop(rect), config, device, rect=rect, full_size=image.size))
+                            tile_calls += 1
+                    rows = fuse_duplicate_boxes(rows)
+                    if config.appearance and rows:
+                        if encoder is None:
+                            LOG.info('Loading generic tracking appearance encoder: %s', config.appearance_model)
+                            encoder = DinoEncoder(config, device)
+                        for row, feature in zip(rows, encoder(image, rows)):
+                            row['feature'] = feature
+                    atomic_json(cache_path, dict(frame=index, detections=rows, tile_passes=tile_calls,
+                                                 appearance_revision=getattr(encoder, 'revision', None)))
+                    frame_stats['detector_inferred_frames'] += 1
+                    frame_stats['tile_passes'] += tile_calls
+                previous_tiny = any((r['bbox'][3] - r['bbox'][1]) / image.height < config.tile_target_height_ratio
+                                    and r['confidence'] >= config.high_confidence for r in rows)
+                if analysis_frames == 'sampled':
+                    visible = tracker.update(rows, index)
+                else:
                     raw = np.asarray([r['bbox'] + [tracking_confidence(r, config), 0.] for r in rows],
                                      dtype=np.float32).reshape(-1, 6)
                     batch = DetectionBatch(Boxes(raw, (image.height, image.width)))
                     features = np.asarray([r['feature'] for r in rows], dtype=np.float32) if config.appearance and rows else None
                     tracker.update(batch, img=np.asarray(image)[:, :, ::-1].copy(), feats=features)
-                    # Include unconfirmed births, preserving their explicit weak-evidence flags later.
                     visible = [t for t in tracker.tracked_stracks if t.frame_id == tracker.frame_id]
-                    associated = {int(t.idx) for t in visible}
-                    # Preserve unassociated proposals as explicit recovery evidence;
-                    # they are not each promoted to a physical entity identity.
-                    unassociated = [dict(bbox=row['bbox'], confidence=row['confidence'], category=row['category'],
-                                         source=row['source'], reason='not_associated_or_insufficient_birth_evidence')
-                                    for i, row in enumerate(rows) if i not in associated]
-                    if unassociated:
-                        candidates.append(dict(frame=index, time_sec=index / shot['fps'], detections=unassociated))
-                    for track in visible:
-                        row = rows[int(track.idx)]
-                        obs = dict(frame=index, source_frame=index, shot_id=shot['shot_id'],
-                                   time_sec=index / shot['fps'],
-                                   full_time_sec=shot['full_start_sec'] + index / shot['fps'],
-                                   original_time_sec=shot['original_start_frame'] / shot['original_fps'] + index / shot['fps'],
-                                   original_frame=shot['original_start_frame'] + round(index / shot['fps'] * shot['original_fps']),
-                                   bbox=row['bbox'], confidence=row['confidence'], category=row['category'],
-                                   alternative_categories=row.get('alternative_categories', []),
-                                   detector_class_id=row['class_id'], detection_source=row['source'],
-                                   evidence='observed_detection', tracker_confirmed=bool(track.is_activated),
-                                   image=None, crop=None, _feature=row.get('feature'))
-                        groups[int(track.track_id)].append(obs)
-                    frame_stats['dense_frames'] += 1
-                    frame_stats['detections'] += len(rows)
-                    frame_stats['observed_track_boxes'] += len(visible)
-                    frame_stats['unassociated_low_confidence_boxes'] += len(rows) - len(visible)
-                    decoded += 1
-                    if (index + 1) % 50 == 0:
-                        LOG.info('  %s %d/%d frames; %d track births', shot['shot_id'], index + 1,
-                                 shot['frame_count'], len(groups))
-            if decoded != shot['frame_count']:
+                associated = {int(t.idx) for t in visible}
+                # Preserve unassociated proposals as explicit recovery evidence;
+                # they are not each promoted to a physical entity identity.
+                unassociated = [dict(bbox=row['bbox'], confidence=row['confidence'], category=row['category'],
+                                     source=row['source'], reason='not_associated_or_insufficient_birth_evidence')
+                                for i, row in enumerate(rows) if i not in associated]
+                if unassociated:
+                    candidates.append(dict(frame=index, time_sec=index / shot['fps'], detections=unassociated))
+                for track in visible:
+                    row = rows[int(track.idx)]
+                    obs = dict(frame=index, source_frame=index, shot_id=shot['shot_id'],
+                               time_sec=index / shot['fps'],
+                               full_time_sec=shot['full_start_sec'] + index / shot['fps'],
+                               original_time_sec=shot['original_start_frame'] / shot['original_fps'] + index / shot['fps'],
+                               original_frame=shot['original_start_frame'] + round(index / shot['fps'] * shot['original_fps']),
+                               bbox=row['bbox'], confidence=row['confidence'], category=row['category'],
+                               alternative_categories=row.get('alternative_categories', []),
+                               detector_class_id=row['class_id'], detection_source=row['source'],
+                               evidence='observed_detection', tracker_confirmed=bool(track.is_activated),
+                               image=None, crop=None, _feature=row.get('feature'))
+                    groups[int(track.track_id)].append(obs)
+                frame_stats['analyzed_frames'] += 1
+                frame_stats['sampled_frames' if analysis_frames == 'sampled' else 'dense_frames'] += 1
+                frame_stats['detections'] += len(rows)
+                frame_stats['observed_track_boxes'] += len(visible)
+                frame_stats['unassociated_low_confidence_boxes'] += len(rows) - len(visible)
+                decoded += 1
+                if (index + 1) % 50 == 0:
+                    LOG.info('  %s %d/%d frames; %d track births', shot['shot_id'], index + 1,
+                             shot['frame_count'], len(groups))
+            if decoded != expected:
                 raise ValueError(f'Original frame count mismatch: {shot["shot_id"]}: {decoded} != {shot["frame_count"]}')
             shot['tracks'] = _finish_tracks(groups, shot['fps'], config)
             proposal_path = output / 'dense_tracking' / 'candidates' / f'{shot["shot_id"]}.json'
@@ -610,16 +631,16 @@ def build_dense_tracks(source: Path, output: Path, *, model='yolo11x.pt', device
         gc.collect()
         if str(device).startswith('cuda'):
             torch.cuda.empty_cache()
-    bundle = dict(version=VERSION, fingerprint=bundle_key, asset_root=str(output), source=str(Path(source).resolve()),
-                  config=asdict(config), detector_model=str(weights), tracker='Ultralytics BoT-SORT',
+    bundle = dict(version=VERSION, fingerprint=bundle_key, asset_root=str(output), source=str(Path(source).resolve()), analysis_frames=analysis_frames,
+                  config=asdict(config), detector_model=str(weights), tracker='Sparse time-aware association' if analysis_frames == 'sampled' else 'Ultralytics BoT-SORT',
                   detector_cache_key=detector_cache_key,
                   tracker_class_policy='one class-agnostic tracker per shot; detector classes are provisional evidence',
                   appearance_model=config.appearance_model if config.appearance else None,
-                  timing_policy='dense original frames; observations retain original and concatenated timestamps',
+                  timing_policy=f'{analysis_frames} frames; observations retain original and concatenated timestamps',
                   visibility_policy='only detector-observed boxes; gaps are unknown, never fabricated visibility',
                   shots=built_shots, stats=dict(totals), elapsed_sec=time.perf_counter() - started)
     atomic_json(bundle_path, bundle)
-    LOG.info('Dense tracking complete: %d frames, %d tracks, %.1f sec', totals['dense_frames'], totals['tracks'],
+    LOG.info('Dense tracking complete: %d frames, %d tracks, %.1f sec', totals['analyzed_frames'], totals['tracks'],
              bundle['elapsed_sec'])
     return bundle
 
@@ -627,6 +648,7 @@ def build_dense_tracks(source: Path, output: Path, *, model='yolo11x.pt', device
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--source', type=Path, required=True)
+    parser.add_argument('--original-video', type=Path, help='Recover unavailable shots from original frame intervals')
     parser.add_argument('--output', type=Path, required=True)
     parser.add_argument('--model', default='yolo11x.pt')
     parser.add_argument('--device', default='cuda:0')
@@ -636,6 +658,7 @@ def main():
     args = parser.parse_args()
     logging.basicConfig(level=logging.INFO, format='%(asctime)s %(levelname)s %(message)s')
     bundle = build_dense_tracks(args.source, args.output, model=args.model, device=args.device, force=args.force,
+                                original_video=args.original_video,
                                 config=DenseTrackingConfig(appearance=not args.no_appearance, tile_enabled=not args.no_tiles))
     print(json.dumps(dict(bundle=str(args.output / 'dense_tracking' / 'bundle.json'), stats=bundle['stats']), ensure_ascii=False))
 

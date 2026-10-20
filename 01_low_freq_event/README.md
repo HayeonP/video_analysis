@@ -31,16 +31,6 @@
 ./visualize.sh outputs/prompt_test
 ```
 
-## VS Code Remote에서 시각화 보기
-
-원격 개발 PC의 터미널에서 결과를 지정해 뷰어를 실행합니다. VS Code가 포트 5001을 자동으로 전달하면 알림에서 브라우저 열기를 선택하세요.
-
-```bash
-./visualize.sh outputs/prompt_v1 --host 127.0.0.1 --port 5001
-```
-
-자동 전달되지 않으면 VS Code의 **Ports** 패널에서 `5001` 포트를 전달하고, 로컬 브라우저에서 `http://localhost:5001`을 여세요. 다른 결과를 보려면 `outputs/prompt_v1` 대신 해당 결과 폴더를 지정합니다. 서버 종료는 터미널에서 `Ctrl+C`입니다.
-
 설정만 확인 (모델 실행 없음):
 
 ```bash
@@ -58,7 +48,8 @@ Qwen3-VL-4B-Instruct, NF4 4bit. 전체 화면 10fps·5초, 오버랩 및 윈도 
 - `events_10fps.sh`, `visualize.sh`: 사용자 실행 진입점
 - `prompts/`: 직접 수정할 프롬프트
 - `runtime/`, `low_freq_event/`: 실행·설치에 필요한 내부 코드
-- `videos/`, `models/`, `.venv/`: 영상·추적 모델·실행 환경
+- `models/`, `.venv/`: 추적 모델·실행 환경
+- 입력 영상은 저장소 밖에 준비하고 실행 인자로 경로를 지정합니다.
 - `outputs/`: 승인된 추적 결과와 새 분석 결과
 - `tests/`: 코드 검증
 - `docs/memo.md`: 보존한 사용자 메모

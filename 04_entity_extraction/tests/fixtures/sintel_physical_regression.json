@@ -1,0 +1,51 @@
+{
+  "scope": "Manual evaluation only; never input to inference.",
+  "cases": [
+    {
+      "kind": "no_independent_shadow",
+      "shot_id": "shot_0014",
+      "frame": 63,
+      "observations": [
+        {
+          "bbox": [
+            540.078,
+            651.484,
+            575.195,
+            666.016
+          ]
+        }
+      ],
+      "note": "Manual source-frame annotation: cast shadow must not create an independent person ID. It may be excluded or retained as an observation of its visible owner; this is an identity-count check, not a pixel-mask test.",
+      "owner_bbox": [
+        536.625,
+        615.75,
+        556.875,
+        655.5
+      ]
+    },
+    {
+      "kind": "same_body",
+      "shot_id": "shot_0014",
+      "frame": 141,
+      "observations": [
+        {
+          "bbox": [
+            499.209,
+            607.285,
+            513.74,
+            648.457
+          ]
+        },
+        {
+          "bbox": [
+            502.539,
+            597.9,
+            564.297,
+            653.906
+          ]
+        }
+      ],
+      "note": "Manually inspected source frame: tight torso crop and whole-body crop depict one person."
+    }
+  ]
+}

@@ -5,7 +5,7 @@ import json
 from pathlib import Path
 import numpy as np
 
-VERSION=1
+VERSION=2
 
 
 def cuts_from_signals(rows):
@@ -24,17 +24,21 @@ def cuts_from_signals(rows):
 
 
 def scan_video(path):
-    import av,cv2
-    maxima=[];hsv=[];hists=[]
+    import av
     with av.open(str(path)) as container:
-        for frame in container.decode(video=0):
-            rgb=frame.to_ndarray(format='rgb24')
-            maxima.append(int(cv2.cvtColor(rgb,cv2.COLOR_RGB2GRAY).max()))
-            small=cv2.resize(rgb,(160,90),interpolation=cv2.INTER_AREA)
-            value=cv2.cvtColor(small,cv2.COLOR_RGB2HSV)
-            hsv.append(value.astype(np.float32))
-            hist=cv2.calcHist([value],[0,1],None,[16,8],[0,180,0,256])
-            hists.append(cv2.normalize(hist,hist).flatten())
+        return scan_images(frame.to_ndarray(format='rgb24') for frame in container.decode(video=0))
+
+
+def scan_images(images):
+    import cv2
+    maxima=[];hsv=[];hists=[]
+    for rgb in images:
+        maxima.append(int(cv2.cvtColor(rgb,cv2.COLOR_RGB2GRAY).max()))
+        small=cv2.resize(rgb,(160,90),interpolation=cv2.INTER_AREA)
+        value=cv2.cvtColor(small,cv2.COLOR_RGB2HSV)
+        hsv.append(value.astype(np.float32))
+        hist=cv2.calcHist([value],[0,1],None,[16,8],[0,180,0,256])
+        hists.append(cv2.normalize(hist,hist).flatten())
     content=np.r_[0,np.abs(np.diff(np.asarray(hsv),axis=0)).mean(axis=(1,2,3))]
     distance=[0]+[cv2.compareHist(hists[i-1],hists[i],cv2.HISTCMP_BHATTACHARYYA) for i in range(1,len(hists))]
     rows=[]
@@ -52,6 +56,7 @@ def apply_internal_barriers(evidence,dense,output):
     All original observations remain, including explicit fallback detections.
     Distinct temporal fragments may later share a semantic Entity identity.
     """
+    if evidence.get('internal_boundaries',{}).get('version')==VERSION:return evidence
     output=Path(output);folder=output/'internal_boundaries';folder.mkdir(parents=True,exist_ok=True)
     refined=deepcopy(evidence);source={s['shot_id']:s for s in dense['shots']};records=[]
     from shot_tracking import select_representatives
@@ -61,9 +66,20 @@ def apply_internal_barriers(evidence,dense,output):
         cache=folder/(key+'.json')
         if cache.exists():signals=json.loads(cache.read_text())
         else:
-            signals=scan_video(shot['source']);cache.write_text(json.dumps(signals))
-        if len(signals)!=shot['frame_count']:raise ValueError('Boundary scan frame count differs from source')
-        cuts,black=cuts_from_signals(signals);edges=[0]+cuts+[shot['frame_count']]
+            if shot.get('analysis_frames') == 'sampled':
+                from sampled_frames import iter_shot_images
+                signals=scan_images(np.asarray(im) for _,im in iter_shot_images(shot))
+            else:signals=scan_video(shot['source'])
+            cache.write_text(json.dumps(signals))
+        sampled=shot.get('analysis_frames') == 'sampled'
+        expected=len(shot['adaptive_frames']) if sampled else shot['frame_count']
+        if len(signals)!=expected:raise ValueError('Boundary scan frame count differs from source')
+        cuts,black=cuts_from_signals(signals)
+        if sampled:
+            frames=shot['adaptive_frames']
+            cuts=[frames[i] for i in cuts]
+            black=[[frames[a],frames[b] if b<len(frames) else shot['frame_count']] for a,b in black]
+        edges=[0]+cuts+[shot['frame_count']]
         spans=list(zip(edges,edges[1:]));original={t['track_id']:t for t in source[shot['shot_id']]['tracks']}
         tracks=[];dropped=[]
         for track in shot['tracks']:
@@ -79,12 +95,17 @@ def apply_internal_barriers(evidence,dense,output):
                     continue
                 child=deepcopy(track);child['observations']=observations
                 child['representatives']=[o for o in track.get('representatives',[]) if a<=o['frame']<b]
-                if len(spans)>1:
+                occupied=sum(any(a<=o['frame']<b for o in track['observations']) for a,b in spans)
+                if occupied>1:
                     child['track_id']=track['track_id']+f':B{index+1:03d}'
                     child['internal_boundary_parent']=track['track_id']
                     child['temporal_candidate']=dict(first_frame=a,last_frame=b-1,same_identity_allowed=True,
                         reason='source hard cut or near-black interval, not a claimed identity change')
                 child['first_frame']=observations[0]['frame'];child['last_frame']=observations[-1]['frame']
+                child['observed_frames']=len(observations)
+                child['observed_duration_sec']=len(observations)/shot['fps']
+                child['span_duration_sec']=(observations[-1]['frame']-observations[0]['frame']+1)/shot['fps']
+                child['observation_coverage']=len(observations)/(observations[-1]['frame']-observations[0]['frame']+1)
                 for row in child['observations']+child['representatives']:row['track_id']=child['track_id']
                 ensure_representatives(refined,shot,child,output)
                 child['representatives']=select_representatives(child['representatives'],8)

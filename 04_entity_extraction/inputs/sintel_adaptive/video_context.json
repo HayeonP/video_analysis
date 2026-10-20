@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "title": "Sintel",
+  "media_type": "animated film trailer",
+  "usage": "weak_prior_only",
+  "sources": [
+    {
+      "url": "https://www.colinlevy.com/sintel",
+      "final_url": "https://www.colinlevy.com/sintel",
+      "title": "Sintel — Colin Levy | Writer / Director",
+      "excerpt": "An animated fantasy short about a girl who cares for an injured baby dragon, then searches for it after they are separated.",
+      "retrieved_at": "2026-10-13T00:54:10+00:00",
+      "content_sha256": "f760d5fdbf76dcc7d6a01d1f42b9726d45d1015d600aa22e49e2aa263a9a64c0",
+      "text_kind": "paraphrase"
+    }
+  ]
+}

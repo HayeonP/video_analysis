@@ -39,7 +39,7 @@ def main():
     parser = argparse.ArgumentParser(description="저빈도 영상 이벤트 추출 · Stage 1 전용")
     commands = parser.add_subparsers(dest="command")
     run = commands.add_parser("analyze", help="분석하거나 저장된 중단 지점에서 재개")
-    run.add_argument("video", nargs="?", default=str(ROOT / "videos/sintel_10s.mp4"))
+    run.add_argument("video", help="입력 영상 파일 경로")
     run.add_argument("--output", type=Path, help="생략하면 outputs/<영상 이름>_unified_gpu (CPU 지정 시 _unified)")
     run.add_argument("--config", type=Path)
     run.add_argument('--tracking-only', action='store_true', help='추적까지만 실행; VLM 없이 같은 폴더에서 후속 분석 가능')
@@ -69,7 +69,7 @@ def main():
     trim = commands.add_parser("trim", help="입력 영상의 앞부분을 독립적인 mp4로 저장")
     trim.add_argument("source", type=Path)
     trim.add_argument("--seconds", type=float, default=10)
-    trim.add_argument("--output", type=Path, default=ROOT / "videos/sintel_10s.mp4")
+    trim.add_argument("--output", type=Path, default=ROOT / "outputs/sintel_10s.mp4")
     args = parser.parse_args()
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(message)s", datefmt="%H:%M:%S")
     try:

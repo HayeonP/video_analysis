@@ -1,0 +1,257 @@
+{
+  "source": "Frozen pre-upgrade context fixture, used only by independent evaluation",
+  "observations": [
+    {
+      "detection_id": "shot_0003_f00000012_person_000",
+      "shot_id": "shot_0003",
+      "source_frame": 12,
+      "bbox": [
+        329.73467508951813,
+        200.0178301775897,
+        682.0929209391278,
+        875.4814995659722
+      ],
+      "source_size": [
+        1920,
+        1080
+      ],
+      "entity_id": "S003_002",
+      "bbox_format": "xyxy_normalized_0_1000",
+      "kind": "person"
+    },
+    {
+      "detection_id": "shot_0005_f00000000_person_000",
+      "shot_id": "shot_0005",
+      "source_frame": 0,
+      "bbox": [
+        117.70610809326172,
+        124.67193603515625,
+        626.2348175048828,
+        872.5538465711805
+      ],
+      "source_size": [
+        1920,
+        1080
+      ],
+      "entity_id": "S005_001",
+      "bbox_format": "xyxy_normalized_0_1000",
+      "kind": "person"
+    },
+    {
+      "detection_id": "shot_0005_f00000023_person_000",
+      "shot_id": "shot_0005",
+      "source_frame": 23,
+      "bbox": [
+        113.05146217346191,
+        124.31555853949652,
+        622.6702372233073,
+        871.1705525716146
+      ],
+      "source_size": [
+        1920,
+        1080
+      ],
+      "entity_id": "S005_001",
+      "bbox_format": "xyxy_normalized_0_1000",
+      "kind": "person"
+    },
+    {
+      "detection_id": "shot_0005_f00000036_person_000",
+      "shot_id": "shot_0005",
+      "source_frame": 36,
+      "bbox": [
+        100.0,
+        110.0,
+        660.0,
+        880.0
+      ],
+      "source_size": [
+        1920,
+        1080
+      ],
+      "entity_id": "S005_001",
+      "bbox_format": "xyxy_normalized_0_1000",
+      "kind": "person"
+    },
+    {
+      "detection_id": "shot_0011_f00000009_person_000",
+      "shot_id": "shot_0011",
+      "source_frame": 9,
+      "bbox": [
+        239.85614776611328,
+        123.05543687608507,
+        725.2166748046875,
+        874.418470594618
+      ],
+      "source_size": [
+        1920,
+        1080
+      ],
+      "entity_id": "S011_001",
+      "bbox_format": "xyxy_normalized_0_1000",
+      "kind": "person"
+    },
+    {
+      "detection_id": "shot_0011_f00000013_person_000",
+      "shot_id": "shot_0011",
+      "source_frame": 13,
+      "bbox": [
+        237.7436637878418,
+        122.46314154730904,
+        725.3629048665363,
+        871.8100653754341
+      ],
+      "source_size": [
+        1920,
+        1080
+      ],
+      "entity_id": "S011_001",
+      "bbox_format": "xyxy_normalized_0_1000",
+      "kind": "person"
+    },
+    {
+      "detection_id": "shot_0015_f00000000_person_000",
+      "shot_id": "shot_0015",
+      "source_frame": 0,
+      "bbox": [
+        260.43217976888025,
+        566.1380343967014,
+        271.2366739908855,
+        602.4876912434894
+      ],
+      "source_size": [
+        1920,
+        1080
+      ],
+      "entity_id": "S015_001",
+      "bbox_format": "xyxy_normalized_0_1000",
+      "kind": "person"
+    },
+    {
+      "detection_id": "shot_0004_f00000007_person_000",
+      "shot_id": "shot_0004",
+      "source_frame": 7,
+      "bbox": [
+        0.0,
+        100.0,
+        1000.0,
+        900.0
+      ],
+      "source_size": [
+        1920,
+        1080
+      ],
+      "entity_id": "S004_001",
+      "bbox_format": "xyxy_normalized_0_1000",
+      "kind": "person"
+    },
+    {
+      "detection_id": "shot_0004_f00000014_person_000",
+      "shot_id": "shot_0004",
+      "source_frame": 14,
+      "bbox": [
+        0.0,
+        125.0,
+        986.0,
+        880.0
+      ],
+      "source_size": [
+        1920,
+        1080
+      ],
+      "entity_id": "S004_001",
+      "bbox_format": "xyxy_normalized_0_1000",
+      "kind": "person"
+    },
+    {
+      "detection_id": "shot_0004_f00000020_person_000",
+      "shot_id": "shot_0004",
+      "source_frame": 20,
+      "bbox": [
+        0.0,
+        125.0,
+        986.0,
+        880.0
+      ],
+      "source_size": [
+        1920,
+        1080
+      ],
+      "entity_id": "S004_001",
+      "bbox_format": "xyxy_normalized_0_1000",
+      "kind": "person"
+    },
+    {
+      "detection_id": "shot_0004_f00000027_person_000",
+      "shot_id": "shot_0004",
+      "source_frame": 27,
+      "bbox": [
+        0.0,
+        125.0,
+        986.0,
+        880.0
+      ],
+      "source_size": [
+        1920,
+        1080
+      ],
+      "entity_id": "S004_001",
+      "bbox_format": "xyxy_normalized_0_1000",
+      "kind": "person"
+    },
+    {
+      "detection_id": "shot_0004_f00000033_person_000",
+      "shot_id": "shot_0004",
+      "source_frame": 33,
+      "bbox": [
+        0.0,
+        125.0,
+        986.0,
+        880.0
+      ],
+      "source_size": [
+        1920,
+        1080
+      ],
+      "entity_id": "S004_001",
+      "bbox_format": "xyxy_normalized_0_1000",
+      "kind": "person"
+    },
+    {
+      "detection_id": "shot_0004_f00000044_person_000",
+      "shot_id": "shot_0004",
+      "source_frame": 44,
+      "bbox": [
+        260.0,
+        123.99999999999999,
+        990.0,
+        872.0
+      ],
+      "source_size": [
+        1920,
+        1080
+      ],
+      "entity_id": "S004_001",
+      "bbox_format": "xyxy_normalized_0_1000",
+      "kind": "person"
+    },
+    {
+      "detection_id": "shot_0004_f00000045_person_000",
+      "shot_id": "shot_0004",
+      "source_frame": 45,
+      "bbox": [
+        260.0,
+        123.99999999999999,
+        990.0,
+        872.0
+      ],
+      "source_size": [
+        1920,
+        1080
+      ],
+      "entity_id": "S004_001",
+      "bbox_format": "xyxy_normalized_0_1000",
+      "kind": "person"
+    }
+  ]
+}

@@ -22,7 +22,45 @@ from story_export import validate_story_contract
 from story_semantics import (StoryBackend, BudgetExhausted, ShotDecision, GlobalDecision,
     validate_local, validate_global, review_shots, resolve_global, revise_narrative,
     cannot_links, scene_sheet, crop_sheet, gallery_pages, geometry_context,
-    apply_global_rejections)
+    apply_global_rejections, pending_local_reviews, annotate_identity_scopes, guard_fragment_narrative)
+
+
+class IdentityScopeTests(unittest.TestCase):
+    def test_unowned_fragment_cannot_survive_as_a_separate_narrative_actor(self):
+        entities=[dict(entity_id='G0001',label='traveler'),
+                  dict(entity_id='G0002',label='unowned hand',identity_scope='part_owner_unresolved')]
+        original='G0001 meets another person G0002.'
+        shots=[dict(shot_id='scene',summary=original,entities=['G0001','G0002'],
+                    events=[dict(subject='G0002',action='fights',object='G0001')]),
+               dict(shot_id='other',summary='G0001 walks.',entities=['G0001'],events=[])]
+        untouched=deepcopy(shots[1])
+        self.assertEqual(guard_fragment_narrative(shots,entities),['scene'])
+        self.assertEqual(shots[0]['unverified_summary'],original)
+        self.assertEqual(shots[0]['events'],[])
+        self.assertNotIn('another person',shots[0]['summary'])
+        self.assertEqual(shots[0]['summary_scope'],'observed_ids_only')
+        self.assertEqual(shots[1],untouched)
+
+    def test_only_unowned_parts_are_relabelled_without_changing_partition(self):
+        local=dict(shots=[dict(track_roles={'face':'whole_subject','hand':'body_part','sleeve':'worn_item'},
+            entities=[dict(local_id='face',track_ids=['face']),dict(local_id='hand',track_ids=['hand']),
+                      dict(local_id='sleeve',track_ids=['sleeve'])])])
+        result=dict(entities=[dict(entity_id='A',local_ids=['face'],label='traveler',uncertain=False),
+                             dict(entity_id='B',local_ids=['hand'],label='traveler',uncertain=False),
+                             dict(entity_id='C',local_ids=['sleeve'],label='coat',uncertain=False)],
+                    mapping={'face':'A','hand':'B','sleeve':'C'})
+        before=deepcopy(result)
+        annotated=annotate_identity_scopes(result,local)
+        self.assertEqual(annotated['mapping'],before['mapping'])
+        self.assertEqual(annotated['entities'][0],before['entities'][0])
+        self.assertEqual(annotated['entities'][1]['identity_status'],'unresolved')
+        self.assertEqual(annotated['entities'][1]['observation_label'],'traveler')
+        self.assertIn('신체 부분',annotated['entities'][1]['label'])
+        self.assertIn('착용물',annotated['entities'][2]['label'])
+        snapshot=deepcopy(annotated)
+        self.assertEqual(annotate_identity_scopes(annotated,local),snapshot)
+        owned=dict(entities=[dict(entity_id='A',local_ids=['face','hand'],label='traveler',uncertain=False)])
+        self.assertEqual(annotate_identity_scopes(deepcopy(owned),local),owned)
 
 
 class Probe(BaseModel):
@@ -41,6 +79,9 @@ class FakeBackend:
         payload = self.responses.pop(0)
         if isinstance(payload, Exception):
             raise payload
+        if schema.__name__=='GlobalPartition' and 'entities' in payload:
+            payload=dict(groups=[row['local_ids'] for row in payload['entities']],
+                         rejections=payload.get('rejection_reasons',{}))
         response = schema.model_validate(payload)
         try:
             return kwargs.get('validate', lambda x: x)(response)
@@ -80,6 +121,17 @@ def fixture(folder, *, two_tracks=False):
 
 
 class BudgetTests(unittest.TestCase):
+    def test_resume_reserves_changed_and_missing_shots_but_not_cached_future_shots(self):
+        with tempfile.TemporaryDirectory() as temp:
+            output=Path(temp)
+            bundle={'shots':[{'shot_id':f's{i}','tracks':[{'track_id':f's{i}:T1'}]} for i in range(1,4)]}
+            self.assertEqual(pending_local_reviews(bundle,output),{'s1','s2','s3'})
+            (output/'local_entities.json').write_text(json.dumps({'shots':[{'shot_id':'s1'},{'shot_id':'s2'}]}))
+            (output/'reviewed_tracking.json').write_text(json.dumps(bundle))
+            changed=deepcopy(bundle)
+            changed['shots'][0]['tracks']=[{'track_id':'s1:T1:R001'},{'track_id':'s1:T1:R002'}]
+            self.assertEqual(pending_local_reviews(changed,output),{'s1','s3'})
+
     def test_cache_and_resume_do_not_consume_new_generations(self):
         with tempfile.TemporaryDirectory() as temp:
             output = Path(temp); settings = Settings(json_retries=0)
@@ -108,6 +160,28 @@ class BudgetTests(unittest.TestCase):
             with self.assertRaises(BudgetExhausted):
                 resumed.request('again', Probe)
 
+    def test_thinking_request_has_bound_decoding_and_final_answer_budget(self):
+        with tempfile.TemporaryDirectory() as temp:
+            backend=StoryBackend(Settings(model_id='Qwen/Qwen3-VL-8B-Thinking',json_retries=0),Path(temp),limit=1)
+            with patch.object(ReviewBackend,'request',return_value=Probe(value=7)) as request:
+                backend.request('compare',Probe,max_tokens=800)
+            self.assertEqual(request.call_args.kwargs['max_tokens'],8192)
+            self.assertEqual(request.call_args.kwargs['generation_options']['seed'],0)
+            self.assertTrue(request.call_args.kwargs['generation_options']['do_sample'])
+            self.assertIn('8192',request.call_args.args[0])
+
+    def test_bounded_reasoning_also_caps_final_output_without_spending_on_cache_probe(self):
+        with tempfile.TemporaryDirectory() as temp:
+            backend=StoryBackend(Settings(model_id='Qwen/Qwen3-VL-8B-Thinking',json_retries=0),Path(temp),limit=2)
+            backend.identity_thinking_budget=1024
+            backend.phase='global_focused:test'
+            with patch.object(ReviewBackend,'_generate',return_value='{"value":7}') as generate:
+                self.assertEqual(backend.request('bounded',Probe,max_tokens=800).value,7)
+                self.assertEqual(generate.call_args.args[3],1888)
+                self.assertEqual(backend.ledger['generations'],1)
+                self.assertEqual(backend.request('bounded',Probe,max_tokens=800).value,7)
+                self.assertEqual(generate.call_count,1)
+
     def test_invalid_json_retry_counts_both_generations(self):
         with tempfile.TemporaryDirectory() as temp:
             backend = StoryBackend(Settings(json_retries=1), Path(temp), limit=2)
@@ -134,6 +208,16 @@ class BudgetTests(unittest.TestCase):
 
 
 class LocalValidationTests(unittest.TestCase):
+    def test_class_and_body_part_role_words_do_not_invent_an_owner(self):
+        raw=raw_local()
+        raw['entities'][0]['kind']='body_part'
+        raw['track_roles']={'T001':'hand','T002':'animal'}
+        result=ShotDecision.model_validate(raw)
+        self.assertEqual(result.track_roles,{'T001':'body_part','T002':'whole_subject'})
+        self.assertEqual(result.entities[0].kind,'unknown')
+        self.assertTrue(result.entities[0].uncertain)
+        self.assertIn('owner unresolved',result.entities[0].reason)
+
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
         self.addCleanup(self.temp.cleanup)
@@ -350,12 +434,18 @@ class GeometryRelationshipTests(unittest.TestCase):
         self.shot['mask_graph'] = dict(conditional_separation=[['s1:T1', 's1:T2']])
         validate_local(self.decision(together=True, relation='part_of'), self.shot, self.aliases)
 
-    def test_held_carried_and_different_require_separate_identities(self):
-        for relation in ('held_by', 'carried_by', 'different_individual'):
+    def test_held_and_carried_require_separate_identities(self):
+        for relation in ('held_by', 'carried_by'):
             with self.subTest(relation=relation):
                 with self.assertRaises(ValueError):
                     validate_local(self.decision(together=True, relation=relation), self.shot, self.aliases)
                 validate_local(self.decision(together=False, relation=relation), self.shot, self.aliases)
+
+    def test_explicit_visual_difference_repairs_shared_assignment(self):
+        result=validate_local(self.decision(together=True,relation='different_individual'),self.shot,self.aliases)
+        self.assertEqual(len(result.entities),2)
+        self.assertNotEqual(result.track_assignments['T001'],result.track_assignments['T002'])
+        self.assertEqual(len(validate_local(result,self.shot,self.aliases).entities),2)
 
     def test_unknown_or_self_relation_is_rejected(self):
         for target in ('unknown', 'T001'):
@@ -393,11 +483,11 @@ class GeometryRelationshipTests(unittest.TestCase):
         self.local['shots'][0]['relations'] = [dict(left='s1:T1', right='s1:T2', relation='carried_by')]
         self.assertEqual(cannot_links(self.bundle, self.local), [['s1:L01', 's1:L02']])
 
-    def test_global_reads_hard_graph_even_when_boxes_overlap(self):
+    def test_region_graph_veto_does_not_assert_physical_identity(self):
         self.shot['mask_graph'] = dict(cannot_link=[['s1:T1', 's1:T2']])
         for row in self.shot['tracks'][1]['observations']:
             row['bbox'] = [10, 10, 40, 60]
-        self.assertEqual(cannot_links(self.bundle, self.local), [['s1:L01', 's1:L02']])
+        self.assertEqual(cannot_links(self.bundle, self.local), [])
 
 
 class GalleryTests(unittest.TestCase):
@@ -485,6 +575,28 @@ class CliSmokeTests(unittest.TestCase):
 
 
 class GlobalValidationTests(unittest.TestCase):
+    def test_local_seed_resolution_uses_prebound_pair_views_without_model_id_choices(self):
+        with tempfile.TemporaryDirectory() as temp:
+            bundle,local=fixture(temp)
+            second=deepcopy(bundle['shots'][0]);second['shot_id']='s2';second['full_start_sec']=6.
+            second['tracks'][0]['track_id']='s2:T1'
+            for row in second['tracks'][0]['observations']+second['tracks'][0]['representatives']:
+                row['original_time_sec']+=6
+            bundle['shots'].append(second)
+            row=deepcopy(local['shots'][0]);row['shot_id']='s2'
+            row['entities'][0].update(local_id='s2:L01',track_ids=['s2:T1'])
+            local['shots'].append(row)
+            response=dict(decision='same',left_view=1,right_view=1,
+                left_observation='Visible matching face and distinctive hair',
+                right_observation='Visible matching face and distinctive hair',
+                basis='distinctive_visual_traits',reason='Matching visible facial structure and hair.')
+            backend=FakeBackend([response])
+            result=resolve_global(bundle,local,Path(temp),backend,initialization='local',review_max_calls=1)
+            self.assertEqual(len(backend.calls),1)
+            self.assertEqual(backend.calls[0]['schema'],'PairedViewDecision')
+            self.assertNotIn('s1:L01',backend.calls[0]['prompt'])
+            self.assertEqual(result['mapping']['s1:L01'],result['mapping']['s2:L01'])
+
     def test_partition_must_include_every_local_entity_once(self):
         one = dict(local_ids=['a'], kind='animal', label='생물', appearance='날개', reason='관측')
         with self.assertRaises(ValueError):
@@ -498,10 +610,10 @@ class GlobalValidationTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             validate_global(GlobalDecision.model_validate(data), {'a', 'b'}, [['a', 'b']])
 
-    def test_covisible_separate_boxes_make_cannot_link(self):
+    def test_covisible_separate_boxes_require_semantic_identity_review(self):
         with tempfile.TemporaryDirectory() as temp:
             bundle, local = fixture(temp, two_tracks=True)
-            self.assertEqual(cannot_links(bundle, local), [['s1:L01', 's1:L02']])
+            self.assertEqual(cannot_links(bundle, local), [])
             # Same species/class contributes no cannot-link without co-visibility.
             for row in bundle['shots'][0]['tracks'][1]['observations']:
                 row['frame'] += 4
@@ -513,9 +625,9 @@ class GlobalValidationTests(unittest.TestCase):
             response = dict(entities=[dict(local_ids=['s1:L01'], kind='animal', label='생물', appearance='날개', reason='영상 근거')])
             backend = FakeBackend([response, response])
             output = Path(temp)/'out'; output.mkdir()
-            result = resolve_global(bundle, local, output, backend)
+            result = resolve_global(bundle, local, output, backend, initialization="whole")
             self.assertEqual(len(backend.calls), 2)
-            self.assertEqual(result['entities'][0]['kind'], 'animal')
+            self.assertEqual(result['entities'][0]['kind'], 'person')
             self.assertEqual(result['mapping'], {'s1:L01': 'G0001'})
 
 
@@ -577,7 +689,7 @@ class GlobalRejectionTests(unittest.TestCase):
             response = dict(entities=[], rejected_local_ids=['s1:L01'],
                             rejection_reasons={'s1:L01':'정적인 암벽과 동일한 윤곽'})
             backend = FakeBackend([response, response])
-            result = resolve_global(bundle, local, Path(temp), backend)
+            result = resolve_global(bundle, local, Path(temp), backend, initialization="whole")
             self.assertEqual(result['entities'], [])
             self.assertEqual(result['mapping'], {})
             self.assertEqual(result['rejected_local_ids'], ['s1:L01'])
@@ -629,6 +741,103 @@ class NarrativeValidationTests(unittest.TestCase):
             output = Path(temp)/'out'; output.mkdir()
             revise_narrative(bundle, local, global_result, output, backend)
             self.assertTrue(backend.calls[0].get('images'))
+
+
+class GlobalAssignmentMapTests(unittest.TestCase):
+    def group(self, key='K01'):
+        return dict(group_id=key, kind='person', label='traveler', appearance='blue scarf', reason='visible face')
+
+    def test_exact_mapping_materializes_each_group_and_explicit_rejection(self):
+        response = GlobalDecision.model_validate(dict(local_assignments={'a':'K01','b':'K01','c':'reject'},
+            entities=[self.group()], rejection_reasons={'c':'rock surface'}))
+        validate_global(response, {'a','b','c'}, [])
+        self.assertEqual(response.entities[0].local_ids, ['a','b'])
+        self.assertEqual(response.rejected_local_ids, ['c'])
+        self.assertEqual(GlobalDecision.model_validate(response.model_dump()), response)
+
+    def test_legacy_partition_roundtrips_new_optional_assignment_fields(self):
+        old = GlobalDecision(entities=[dict(local_ids=['a'], kind='person', label='person', appearance='face', reason='visible')])
+        self.assertEqual(GlobalDecision.model_validate(old.model_dump()), old)
+        rejected = GlobalDecision(entities=[], rejected_local_ids=['a'], rejection_reasons={'a':'background'})
+        self.assertEqual(GlobalDecision.model_validate(rejected.model_dump()), rejected)
+
+    def test_reconciled_canonical_partition_roundtrips_inherited_group_metadata(self):
+        canonical = GlobalDecision(entities=[dict(self.group(), local_ids=['a']), dict(self.group(), local_ids=['b'])])
+        loaded = GlobalDecision.model_validate(canonical.model_dump())
+        validate_global(loaded, {'a','b'}, [])
+        self.assertEqual([row.local_ids for row in loaded.entities], [['a'],['b']])
+
+    def test_unknown_empty_or_duplicate_group_is_not_silently_repaired(self):
+        payloads = [dict(local_assignments={'a':'missing'}, entities=[self.group()]),
+                    dict(local_assignments={}, entities=[self.group()]),
+                    dict(local_assignments={'a':'K01'}, entities=[self.group(),self.group()]),
+                    dict(local_assignments={'a':'K01'}, entities=[dict(self.group(), local_ids=['b'])]),
+                    dict(local_assignments={'a':'K01'}, entities=[self.group()], rejected_local_ids=['a'])]
+        for payload in payloads:
+            with self.subTest(payload=payload), self.assertRaises(ValueError):
+                GlobalDecision.model_validate(payload)
+
+    def test_missing_input_id_and_invented_kind_remain_invalid(self):
+        response = GlobalDecision.model_validate(dict(local_assignments={'a':'K01'}, entities=[self.group()]))
+        with self.assertRaises(ValueError):validate_global(response, {'a','b'}, [])
+        with self.assertRaises(ValueError):
+            GlobalDecision.model_validate(dict(local_assignments={'a':'K01'}, entities=[dict(self.group(),kind='environment')]))
+
+
+class EmptyShotRegressionTests(unittest.TestCase):
+    def test_scene_only_review_has_no_synthetic_ids_and_retains_missed_subject_warning(self):
+        with tempfile.TemporaryDirectory() as temp:
+            bundle, _ = fixture(temp)
+            bundle['shots'][0]['tracks'] = []
+            backend = FakeBackend([dict(summary='먼 배경에 작은 사람이 보인다.', missing_objects=['멀리 있는 작은 사람'],
+                # A model may still emit extra fields. They cannot become detector
+                # observations, fake rejected aliases, IDs, or unsupported events.
+                rejected_tracks=['T999'], entities=[dict(local_id='L99', track_ids=['T999'])],
+                events=[dict(subject='L99', action='walks')])])
+            output = Path(temp)/'out'
+            output.mkdir()
+            result = review_shots(bundle, output, backend)
+            self.assertFalse(result['failures'])
+            self.assertEqual(backend.calls[0]['schema'], 'SceneOnlyDecision')
+            self.assertTrue(backend.calls[0]['images'])
+            self.assertEqual(len(result['shots']), 1)
+            row = result['shots'][0]
+            self.assertEqual(row['missing_objects'], ['멀리 있는 작은 사람'])
+            for field in ('entities', 'rejected_tracks', 'events', 'relations'):
+                self.assertEqual(row[field], [])
+            self.assertEqual(row['summary'], '먼 배경에 작은 사람이 보인다.')
+
+
+class RawGeometryIdentityTests(unittest.TestCase):
+    def test_disjoint_body_part_is_not_a_different_individual(self):
+        with tempfile.TemporaryDirectory() as temp:
+            bundle, local = fixture(temp, two_tracks=True)
+            local['shots'][0]['track_roles'] = {'s1:T1': 'whole_subject', 's1:T2': 'body_part'}
+            self.assertEqual(cannot_links(bundle, local), [])
+            local['shots'][0]['track_roles']['s1:T2'] = 'whole_subject'
+            self.assertEqual(cannot_links(bundle, local), [])
+
+    def test_incomplete_roles_do_not_turn_unknown_region_into_hard_constraint(self):
+        with tempfile.TemporaryDirectory() as temp:
+            bundle, local = fixture(temp, two_tracks=True)
+            local['shots'][0]['track_roles'] = {'s1:T1': 'whole_subject'}
+            self.assertEqual(cannot_links(bundle, local), [])
+
+    def test_explicit_held_carried_or_distinct_relation_survives_without_masks(self):
+        with tempfile.TemporaryDirectory() as temp:
+            bundle, local = fixture(temp, two_tracks=True)
+            local['shots'][0]['track_roles'] = {'s1:T1': 'whole_subject', 's1:T2': 'body_part'}
+            for relation in ('held_by', 'carried_by', 'different_individual'):
+                with self.subTest(relation=relation):
+                    local['shots'][0]['relations'] = [dict(left='s1:T1', right='s1:T2', relation=relation)]
+                    self.assertEqual(cannot_links(bundle, local), [['s1:L01', 's1:L02']])
+
+    def test_single_frame_geometry_does_not_create_permanent_identity_veto(self):
+        with tempfile.TemporaryDirectory() as temp:
+            bundle, local = fixture(temp, two_tracks=True)
+            for track in bundle['shots'][0]['tracks']:
+                track['observations'] = track['observations'][:1]
+            self.assertEqual(cannot_links(bundle, local), [])
 
 
 if __name__ == '__main__':

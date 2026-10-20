@@ -96,6 +96,9 @@ def _select_pairs(bundle, shot, output, aliases, max_pairs):
 
 def _source_frames(bundle, shot, output, selected):
     wanted = {item['frame'] for item in selected}
+    if shot.get('analysis_frames') == 'sampled':
+        from sampled_frames import iter_shot_images
+        return dict(iter_shot_images(shot, wanted))
     result = {}
     size = int(shot['width']), int(shot['height'])
     scene_images = {int(row['frame']): row.get('image') for row in shot.get('scene_frames', [])}

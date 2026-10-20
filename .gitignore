@@ -48,6 +48,7 @@ outputs/
 /videos/*
 !/videos/README.md
 !/videos/*.source.json
+**/videos/
 *.mp4
 *.mov
 *.mkv

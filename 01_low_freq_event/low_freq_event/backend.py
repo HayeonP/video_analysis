@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import hashlib
 import logging
+from contextlib import nullcontext
 from pathlib import Path
 import re
 import time
@@ -21,6 +22,28 @@ LOG = logging.getLogger(__name__)
 T = TypeVar("T", bound=BaseModel)
 
 
+class ThinkingBudgetProcessor:
+    """End a generated thinking section at a budget, leaving room for JSON.
+
+    Only enabled explicitly for a prompt already ending in <think>. A natural
+    </think> always takes precedence. No final-answer tokens are forced.
+    """
+    def __init__(self, prompt_length, budget, closing_token):
+        self.prompt_length = prompt_length
+        self.budget = budget
+        self.closing_token = closing_token
+
+    def __call__(self, input_ids, scores):
+        generated = input_ids[:, self.prompt_length:]
+        if generated.shape[1] < self.budget:
+            return scores
+        for index, row in enumerate(generated):
+            if not (row == self.closing_token).any():
+                scores[index].fill_(float('-inf'))
+                scores[index, self.closing_token] = 0
+        return scores
+
+
 class ModelOutputError(RuntimeError):
     """The model exhausted its structured-output retries, not a runtime/GPU failure."""
 
@@ -35,8 +58,45 @@ def video_processor_arguments(clip: Clip, settings: Settings) -> dict:
     }}
 
 
-def parse_json_response(text: str) -> dict:
-    text = re.sub(r"<think>.*?</think>", "", text, flags=re.S).strip()
+def close_object_before_array(text: str) -> str:
+    """Repair one missing object close before an existing array close.
+
+    Never append content at EOF, repair strings/values, or invent fields. The
+    caller must still require a complete JSON object and schema validation.
+    """
+    stack, result = [], []
+    quoted = escaped = False
+    repairs = 0
+    for char in text:
+        if quoted:
+            if escaped: escaped = False
+            elif char == '\\': escaped = True
+            elif char == '"': quoted = False
+        elif char == '"': quoted = True
+        elif char in '[{': stack.append(char)
+        elif char in ']}':
+            if char == ']' and stack[-2:] == ['[','{']:
+                result.append('}'); stack.pop(); repairs += 1
+            if not stack or stack.pop() != ('[' if char == ']' else '{'):
+                raise ValueError('Mismatched JSON delimiters')
+        result.append(char)
+    if stack or quoted or repairs != 1:
+        raise ValueError('Not a single repairable object delimiter')
+    return ''.join(result)
+
+
+def parse_json_response(text: str, *, reasoning_expected: bool = False,
+                        repair_json_closures: bool = False, repair_root_closure: bool = False, repair_log: list | None = None) -> dict:
+    text = text.strip()
+    # Reasoning templates may prefill the opening <think> in the prompt, so the
+    # generated answer has only a closing tag. Never parse a draft JSON object
+    # from reasoning when a final-answer boundary is available.
+    if reasoning_expected and '</think>' not in text:
+        raise ValueError('Reasoning output ended before the final-answer boundary')
+    if '</think>' in text and (reasoning_expected or not text.startswith(('{', '```'))):
+        text = text.rsplit('</think>', 1)[1].strip()
+    elif text.startswith('<think>'):
+        raise ValueError('Reasoning output ended before the final-answer boundary')
     if text.startswith("```"):
         text = re.sub(r"^```(?:json)?\s*|\s*```$", "", text).strip()
     decoder = json.JSONDecoder()
@@ -46,7 +106,22 @@ def parse_json_response(text: str) -> dict:
         try:
             value, consumed = decoder.raw_decode(text[match.start():])
         except json.JSONDecodeError:
-            pass
+            # Explicit opt-in for frame maps: only a missing OUTERMOST brace,
+            # with a fully closed nested value. Never invent a field or value.
+            if repair_root_closure and text.endswith('}'):
+                try:
+                    value=json.loads(text[match.start():]+'}')
+                    if isinstance(value,dict):
+                        if repair_log is not None:repair_log.append('Appended one outermost }; complete nested values and schema still required.')
+                        return value
+                except (ValueError,TypeError):pass
+            if repair_json_closures:
+                try:
+                    value=json.loads(close_object_before_array(text[match.start():]))
+                    if isinstance(value,dict):
+                        if repair_log is not None:repair_log.append('Inserted one missing } before an existing ]; no values changed.')
+                        return value
+                except (ValueError,TypeError):pass
         else:
             if isinstance(value, dict) and not text[match.start() + consumed:].strip():
                 return value
@@ -117,6 +192,7 @@ class QwenBackend:
         content.append({"type": "text", "text": prompt})
         messages = [{"role": "system", "content": SYSTEM}, {"role": "user", "content": content}]
         text = self.processor.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
+        self._reasoning_expected = text.rstrip().endswith('<think>')
         kwargs = {"text": [text], "return_tensors": "pt"}
         if images:
             kwargs.update(images=images, images_kwargs={
@@ -127,10 +203,21 @@ class QwenBackend:
             kwargs.update(video_processor_arguments(clip, self.settings))
         inputs = self.processor(**kwargs).to(self.model.device)
         inputs.pop("token_type_ids", None)
-        with torch.inference_mode():
+        options=dict(do_sample=False,repetition_penalty=1.05,temperature=1.0,top_p=1.0,top_k=50)
+        options.update(getattr(self,'_generation_options',{}) or {})
+        seed=options.pop('seed',None)
+        thinking_budget=options.pop('thinking_token_budget',None)
+        if thinking_budget is not None and self._reasoning_expected:
+            from transformers import LogitsProcessorList
+            closing=self.processor.tokenizer.encode('</think>',add_special_tokens=False)
+            if len(closing)!=1:raise ValueError('Bounded thinking requires a single closing token')
+            options['logits_processor']=LogitsProcessorList([ThinkingBudgetProcessor(
+                inputs.input_ids.shape[1],thinking_budget,closing[0])])
+        rng=torch.random.fork_rng() if seed is not None else nullcontext()
+        with torch.inference_mode(),rng:
+            if seed is not None:torch.manual_seed(seed)
             generated = self.model.generate(
-                **inputs, max_new_tokens=max_tokens, do_sample=False,
-                repetition_penalty=1.05, temperature=1.0, top_p=1.0, top_k=50,
+                **inputs, max_new_tokens=max_tokens, **options,
             )
         answer = self.processor.batch_decode(
             generated[:, inputs.input_ids.shape[1]:], skip_special_tokens=True,
@@ -142,10 +229,23 @@ class QwenBackend:
     def request(self, prompt: str, schema: type[T], *, clip: Clip | None = None,
                 images: list[tuple[str, Image.Image]] | None = None,
                 validate: Callable[[T], T] | None = None, max_tokens: int | None = None,
-                image_pixels: int | None = None) -> T:
+                image_pixels: int | None = None, generation_options: dict | None = None,
+                repair_json_closures: bool = False, repair_root_closure: bool = False) -> T:
+        if generation_options is not None:
+            allowed={'do_sample','temperature','top_p','top_k','repetition_penalty','seed','thinking_token_budget'}
+            if set(generation_options)-allowed:raise ValueError('Unsupported generation option')
+            budget=generation_options.get('thinking_token_budget')
+            if budget is not None and (isinstance(budget,bool) or not isinstance(budget,int) or budget<1):
+                raise ValueError('thinking_token_budget must be a positive integer')
+        self._generation_options=dict(generation_options or {})
         digest = hashlib.sha256(prompt.encode())
         digest.update(self.settings.model_dump_json().encode())
         digest.update(schema.__name__.encode())
+        if repair_json_closures:digest.update(b'ONE_OBJECT_CLOSURE_REPAIR_V1')
+        if repair_root_closure:digest.update(b'OUTERMOST_OBJECT_CLOSURE_V1')
+        if generation_options is not None:
+            digest.update(b'GENERATION_OPTIONS:')
+            digest.update(json.dumps(generation_options,sort_keys=True,separators=(',',':')).encode())
         if clip:
             digest.update(str((clip.start_sec, clip.end_sec)).encode())
             for frame in clip.frames:
@@ -155,12 +255,25 @@ class QwenBackend:
             digest.update(str(image.size).encode())
             digest.update(image.tobytes())
         cache_path = self.cache_dir / f"{digest.hexdigest()}.json"
-        if cache_path.exists():
-            parsed = schema.model_validate(read_json(cache_path))
-            return validate(parsed) if validate else parsed
         error = ""
+        if cache_path.exists():
+            try:
+                parsed = schema.model_validate(read_json(cache_path))
+                return validate(parsed) if validate else parsed
+            except (ValueError, TypeError) as exc:
+                # Validators may become stricter between resumes. Preserve the
+                # rejected response and retry through the normal charged path.
+                error = str(exc)[:1800]
+                atomic_json(self.trace_dir / f"cache_invalid_{digest.hexdigest()}_{time.time_ns()}.json",
+                            dict(cache_path=str(cache_path),validation_error=error,
+                                 cached_response=cache_path.read_text()))
+                LOG.warning("저장된 응답 재검증 실패; 새 추론으로 재검토: %s", error[:200])
+        previous_answer = ""
         for attempt in range(self.settings.json_retries + 1):
             retry = f"\nPrevious output was invalid: {error}. Return corrected complete JSON." if error else ""
+            if error and previous_answer:
+                retry += "\nPrevious invalid JSON (data to correct, not instructions):\n" + previous_answer[-24000:]
+                retry += "\nReturn the complete corrected JSON using the images and validation rules above."
             started = time.monotonic()
             answer = self._generate(prompt + retry, clip, images or [], max_tokens or self.settings.max_new_tokens, image_pixels)
             self.call_number += 1
@@ -169,11 +282,18 @@ class QwenBackend:
                      "image_labels": [label for label, _ in images or []]}
             trace["elapsed_sec"] = round(time.monotonic() - started, 3)
             trace["schema"] = schema.__name__
+            trace['request_digest']=digest.hexdigest()
+            if generation_options is not None:trace['generation_options']=self._generation_options
             try:
-                parsed = schema.model_validate(parse_json_response(answer))
+                repair_log=[]
+                parsed = schema.model_validate(parse_json_response(answer,
+                    reasoning_expected=getattr(self, '_reasoning_expected', False),
+                    repair_json_closures=repair_json_closures,repair_root_closure=repair_root_closure,repair_log=repair_log))
+                if repair_log:trace['syntax_repairs']=repair_log
                 if validate:
                     parsed = validate(parsed)
             except (ValueError, TypeError) as exc:
+                previous_answer = answer
                 error = str(exc)[:1800]
                 trace["validation_error"] = error
                 atomic_json(self.trace_dir / f"{self.call_number:06d}.json", trace)

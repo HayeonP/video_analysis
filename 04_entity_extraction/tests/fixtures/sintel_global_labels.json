@@ -1,0 +1,23 @@
+{
+  "source": "Existing visually checked context regression: four appearances of the protagonist and one distinct older man. Evaluation only; never inference input.",
+  "groups": [
+    {
+      "name": "protagonist",
+      "kind": "person",
+      "ids": [
+        "S003_002",
+        "S005_001",
+        "S011_001",
+        "S015_001"
+      ]
+    },
+    {
+      "name": "older_man",
+      "kind": "person",
+      "ids": [
+        "S004_001"
+      ]
+    }
+  ],
+  "ambiguous_ids": []
+}

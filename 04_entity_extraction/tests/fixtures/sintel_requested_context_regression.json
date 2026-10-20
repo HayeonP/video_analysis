@@ -1,0 +1,53 @@
+{
+  "scope": "Evaluation only. User identified small bird/white creature as same; inspect supplied source boxes. Not loaded by inference. Small-creature box in shot 12 is the small visible body, not the existing G0008 oversized adult-leg crop.",
+  "observations": [
+    {
+      "id": "shot_0009_small_creature",
+      "shot_id": "shot_0009",
+      "frame": 48,
+      "bbox": [
+        1.5,
+        133.5,
+        897.0,
+        773.25
+      ],
+      "identity": "small_creature"
+    },
+    {
+      "id": "shot_0012_small_creature",
+      "shot_id": "shot_0012",
+      "frame": 15,
+      "bbox": [
+        1154.385,
+        484.98,
+        1384.009,
+        601.23
+      ],
+      "identity": "small_creature"
+    },
+    {
+      "id": "shot_0013_small_creature",
+      "shot_id": "shot_0013",
+      "frame": 27,
+      "bbox": [
+        249.375,
+        132.938,
+        1362.0,
+        798.75
+      ],
+      "identity": "small_creature"
+    },
+    {
+      "id": "shot_0009_red_bird",
+      "shot_id": "shot_0009",
+      "frame": 15,
+      "bbox": [
+        1104.0,
+        133.125,
+        1672.5,
+        608.25
+      ],
+      "identity": "red_bird"
+    }
+  ]
+}

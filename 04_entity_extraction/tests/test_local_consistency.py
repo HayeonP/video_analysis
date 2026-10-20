@@ -39,7 +39,7 @@ def test_repeated_separation_and_two_whole_roles_required():
     out=separate_conflicting_subjects(src,shot,{'x':'A','y':'B'})
     assert len(out.entities)==2
     assert out.track_assignments['A']!=out.track_assignments['B']
-    assert out.relations[0].relation=='different_individual'
+    assert out.relations[0].relation=='uncertain'
     assert len(src.entities)==1
     assert len(separate_conflicting_subjects(out,shot,{'x':'A','y':'B'}).entities)==2
 
@@ -47,3 +47,49 @@ def test_repeated_separation_and_two_whole_roles_required():
 def test_multiple_views_without_conflicting_regions_stay_one():
     src=decision({'A':'whole_subject','B':'whole_subject'})
     assert len(separate_conflicting_subjects(src,{'mask_graph':{}},{'x':'A','y':'B'}).entities)==1
+
+
+def detector_shot(frames, *, nested=False):
+    return dict(tracks=[dict(track_id=tid, observations=[dict(frame=f, bbox=box,
+        confidence=.8, tracker_confirmed=True, evidence='observed_detection') for f in range(frames)])
+        for tid, box in [('x',[0,0,40,80]), ('y',[10,10,20,30] if nested else [90,0,130,80])]])
+
+
+def test_no_mask_repeated_whole_person_boxes_separate_idempotently():
+    src=decision({'A':'whole_subject','B':'whole_subject'})
+    shot=detector_shot(3)
+    out=separate_conflicting_subjects(src,shot,{'x':'A','y':'B'})
+    assert len(out.entities)==2
+    assert out.track_assignments['A']!=out.track_assignments['B']
+    assert len(out.relations)==1
+    assert out.relations[0].relation=='uncertain'
+    assert len(separate_conflicting_subjects(out,shot,{'x':'A','y':'B'}).relations)==1
+
+
+def test_no_mask_body_part_or_containment_keeps_owner():
+    src=decision({'A':'whole_subject','B':'body_part'})
+    assert len(separate_conflicting_subjects(src,detector_shot(4),{'x':'A','y':'B'}).entities)==1
+    src=decision({'A':'whole_subject','B':'whole_subject'})
+    assert len(separate_conflicting_subjects(src,detector_shot(4,nested=True),{'x':'A','y':'B'}).entities)==1
+
+
+def test_no_mask_one_frame_or_weak_continuations_do_not_split():
+    src=decision({'A':'whole_subject','B':'whole_subject'})
+    assert len(separate_conflicting_subjects(src,detector_shot(1),{'x':'A','y':'B'}).entities)==1
+    shot=detector_shot(4)
+    for row in shot['tracks'][1]['observations']:
+        row['confidence']=.1
+    assert len(separate_conflicting_subjects(src,shot,{'x':'A','y':'B'}).entities)==1
+
+
+def test_legacy_geometry_cache_veto_is_downgraded_but_visual_difference_survives():
+    from story_semantics import TrackRelation
+    src=decision({'A':'whole_subject','B':'whole_subject'})
+    src.relations=[TrackRelation(left='A',right='B',relation='different_individual',
+        reason='VLM whole-subject roles plus repeated simultaneous separation: at least two masks or three observed detector boxes')]
+    out=separate_conflicting_subjects(src,detector_shot(3),{'x':'A','y':'B'})
+    assert len(out.entities)==2 and all(r.relation!='different_individual' for r in out.relations)
+    assert len(separate_conflicting_subjects(out,detector_shot(3),{'x':'A','y':'B'}).relations)==1
+    src.relations[0].reason='Focused visual audit v3 of original frames [0,1]: two separate visible bodies'
+    out=separate_conflicting_subjects(src,detector_shot(3),{'x':'A','y':'B'})
+    assert any(r.relation=='different_individual' for r in out.relations)

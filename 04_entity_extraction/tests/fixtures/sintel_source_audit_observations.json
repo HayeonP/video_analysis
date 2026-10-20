@@ -1,0 +1,494 @@
+{
+  "source": "Independent partial source-frame identity audit, 2026-10-13. New labels were frozen before inspecting new local/global identities; box coordinates are manually estimated from source pixels. Evaluation only; never inference input.",
+  "source_video_sha256": "34bbd52a4b89fdf63c8ace50b268da26653a59508288100cd3c23de276db7931",
+  "scope": "23 source boxes over10 protagonist shot appearances and two distinct other people; dragons/objects and unlisted frames are unannotated.",
+  "observations": [
+    {
+      "detection_id": "shot_0003_f00000012_person_000",
+      "shot_id": "shot_0003",
+      "source_frame": 12,
+      "bbox": [
+        329.73467508951813,
+        200.0178301775897,
+        682.0929209391278,
+        875.4814995659722
+      ],
+      "source_size": [
+        1920,
+        1080
+      ],
+      "entity_id": "S003_002",
+      "bbox_format": "xyxy_normalized_0_1000",
+      "kind": "person",
+      "annotation_origin": "inherited manually checked regression fixture",
+      "visibility": "clear"
+    },
+    {
+      "detection_id": "shot_0005_f00000000_person_000",
+      "shot_id": "shot_0005",
+      "source_frame": 0,
+      "bbox": [
+        117.70610809326172,
+        124.67193603515625,
+        626.2348175048828,
+        872.5538465711805
+      ],
+      "source_size": [
+        1920,
+        1080
+      ],
+      "entity_id": "S005_001",
+      "bbox_format": "xyxy_normalized_0_1000",
+      "kind": "person",
+      "annotation_origin": "inherited manually checked regression fixture",
+      "visibility": "clear"
+    },
+    {
+      "detection_id": "shot_0005_f00000023_person_000",
+      "shot_id": "shot_0005",
+      "source_frame": 23,
+      "bbox": [
+        113.05146217346191,
+        124.31555853949652,
+        622.6702372233073,
+        871.1705525716146
+      ],
+      "source_size": [
+        1920,
+        1080
+      ],
+      "entity_id": "S005_001",
+      "bbox_format": "xyxy_normalized_0_1000",
+      "kind": "person",
+      "annotation_origin": "inherited manually checked regression fixture",
+      "visibility": "clear"
+    },
+    {
+      "detection_id": "shot_0005_f00000036_person_000",
+      "shot_id": "shot_0005",
+      "source_frame": 36,
+      "bbox": [
+        100.0,
+        110.0,
+        660.0,
+        880.0
+      ],
+      "source_size": [
+        1920,
+        1080
+      ],
+      "entity_id": "S005_001",
+      "bbox_format": "xyxy_normalized_0_1000",
+      "kind": "person",
+      "annotation_origin": "inherited manually checked regression fixture",
+      "visibility": "clear"
+    },
+    {
+      "detection_id": "shot_0011_f00000009_person_000",
+      "shot_id": "shot_0011",
+      "source_frame": 9,
+      "bbox": [
+        239.85614776611328,
+        123.05543687608507,
+        725.2166748046875,
+        874.418470594618
+      ],
+      "source_size": [
+        1920,
+        1080
+      ],
+      "entity_id": "S011_001",
+      "bbox_format": "xyxy_normalized_0_1000",
+      "kind": "person",
+      "annotation_origin": "inherited manually checked regression fixture",
+      "visibility": "clear"
+    },
+    {
+      "detection_id": "shot_0011_f00000013_person_000",
+      "shot_id": "shot_0011",
+      "source_frame": 13,
+      "bbox": [
+        237.7436637878418,
+        122.46314154730904,
+        725.3629048665363,
+        871.8100653754341
+      ],
+      "source_size": [
+        1920,
+        1080
+      ],
+      "entity_id": "S011_001",
+      "bbox_format": "xyxy_normalized_0_1000",
+      "kind": "person",
+      "annotation_origin": "inherited manually checked regression fixture",
+      "visibility": "clear"
+    },
+    {
+      "detection_id": "shot_0015_f00000000_person_000",
+      "shot_id": "shot_0015",
+      "source_frame": 0,
+      "bbox": [
+        260.43217976888025,
+        566.1380343967014,
+        271.2366739908855,
+        602.4876912434894
+      ],
+      "source_size": [
+        1920,
+        1080
+      ],
+      "entity_id": "S015_001",
+      "bbox_format": "xyxy_normalized_0_1000",
+      "kind": "person",
+      "annotation_origin": "inherited manually checked regression fixture",
+      "visibility": "distant"
+    },
+    {
+      "detection_id": "shot_0004_f00000007_person_000",
+      "shot_id": "shot_0004",
+      "source_frame": 7,
+      "bbox": [
+        0.0,
+        100.0,
+        1000.0,
+        900.0
+      ],
+      "source_size": [
+        1920,
+        1080
+      ],
+      "entity_id": "S004_001",
+      "bbox_format": "xyxy_normalized_0_1000",
+      "kind": "person",
+      "annotation_origin": "inherited manually checked regression fixture",
+      "visibility": "clear"
+    },
+    {
+      "detection_id": "shot_0004_f00000014_person_000",
+      "shot_id": "shot_0004",
+      "source_frame": 14,
+      "bbox": [
+        0.0,
+        125.0,
+        986.0,
+        880.0
+      ],
+      "source_size": [
+        1920,
+        1080
+      ],
+      "entity_id": "S004_001",
+      "bbox_format": "xyxy_normalized_0_1000",
+      "kind": "person",
+      "annotation_origin": "inherited manually checked regression fixture",
+      "visibility": "clear"
+    },
+    {
+      "detection_id": "shot_0004_f00000020_person_000",
+      "shot_id": "shot_0004",
+      "source_frame": 20,
+      "bbox": [
+        0.0,
+        125.0,
+        986.0,
+        880.0
+      ],
+      "source_size": [
+        1920,
+        1080
+      ],
+      "entity_id": "S004_001",
+      "bbox_format": "xyxy_normalized_0_1000",
+      "kind": "person",
+      "annotation_origin": "inherited manually checked regression fixture",
+      "visibility": "clear"
+    },
+    {
+      "detection_id": "shot_0004_f00000027_person_000",
+      "shot_id": "shot_0004",
+      "source_frame": 27,
+      "bbox": [
+        0.0,
+        125.0,
+        986.0,
+        880.0
+      ],
+      "source_size": [
+        1920,
+        1080
+      ],
+      "entity_id": "S004_001",
+      "bbox_format": "xyxy_normalized_0_1000",
+      "kind": "person",
+      "annotation_origin": "inherited manually checked regression fixture",
+      "visibility": "clear"
+    },
+    {
+      "detection_id": "shot_0004_f00000033_person_000",
+      "shot_id": "shot_0004",
+      "source_frame": 33,
+      "bbox": [
+        0.0,
+        125.0,
+        986.0,
+        880.0
+      ],
+      "source_size": [
+        1920,
+        1080
+      ],
+      "entity_id": "S004_001",
+      "bbox_format": "xyxy_normalized_0_1000",
+      "kind": "person",
+      "annotation_origin": "inherited manually checked regression fixture",
+      "visibility": "clear"
+    },
+    {
+      "detection_id": "shot_0004_f00000044_person_000",
+      "shot_id": "shot_0004",
+      "source_frame": 44,
+      "bbox": [
+        260.0,
+        123.99999999999999,
+        990.0,
+        872.0
+      ],
+      "source_size": [
+        1920,
+        1080
+      ],
+      "entity_id": "S004_001",
+      "bbox_format": "xyxy_normalized_0_1000",
+      "kind": "person",
+      "annotation_origin": "inherited manually checked regression fixture",
+      "visibility": "clear"
+    },
+    {
+      "detection_id": "shot_0004_f00000045_person_000",
+      "shot_id": "shot_0004",
+      "source_frame": 45,
+      "bbox": [
+        260.0,
+        123.99999999999999,
+        990.0,
+        872.0
+      ],
+      "source_size": [
+        1920,
+        1080
+      ],
+      "entity_id": "S004_001",
+      "bbox_format": "xyxy_normalized_0_1000",
+      "kind": "person",
+      "annotation_origin": "inherited manually checked regression fixture",
+      "visibility": "clear"
+    },
+    {
+      "entity_id": "P_S02",
+      "detection_id": "manual_P_S02_f00000045",
+      "shot_id": "shot_0002",
+      "source_frame": 45,
+      "bbox_pixels": [
+        429,
+        415,
+        858,
+        949
+      ],
+      "bbox_format": "xyxy source pixels",
+      "source_size": [
+        1920,
+        1080
+      ],
+      "kind": "person",
+      "visibility": "clear",
+      "annotation_origin": "source-frame visual audit before examining new local/global identity outputs",
+      "image": "inputs/sintel_adaptive/shot_0002/frames/frame_00000045.jpg",
+      "image_sha256": "36d52bac68ba862a1af89433ff447dd90a441373d1b310b4782c59f9b6fb1cda",
+      "visual_reason": "Winter clothing, red hair, large eyes; staff excluded from person box"
+    },
+    {
+      "entity_id": "P_S06",
+      "detection_id": "manual_P_S06_f00000011",
+      "shot_id": "shot_0006",
+      "source_frame": 11,
+      "bbox_pixels": [
+        780,
+        147,
+        1690,
+        949
+      ],
+      "bbox_format": "xyxy source pixels",
+      "source_size": [
+        1920,
+        1080
+      ],
+      "kind": "person",
+      "visibility": "clear",
+      "annotation_origin": "source-frame visual audit before examining new local/global identity outputs",
+      "image": "inputs/sintel_adaptive/shot_0006/frames/frame_00000011.jpg",
+      "image_sha256": "ab87258e514953a7e254c91993d4d0e7d4b1e4ca7fa4407074e4ff303e88873b",
+      "visual_reason": "Red-haired protagonist in winter clothing facing camera during staff attack"
+    },
+    {
+      "entity_id": "P_S06",
+      "detection_id": "manual_P_S06_f00000028",
+      "shot_id": "shot_0006",
+      "source_frame": 28,
+      "bbox_pixels": [
+        580,
+        212,
+        1710,
+        949
+      ],
+      "bbox_format": "xyxy source pixels",
+      "source_size": [
+        1920,
+        1080
+      ],
+      "kind": "person",
+      "visibility": "clear",
+      "annotation_origin": "source-frame visual audit before examining new local/global identity outputs",
+      "image": "inputs/sintel_adaptive/shot_0006/frames/frame_00000028.jpg",
+      "image_sha256": "87c233b9eafaebe8ff04ac1fa8ac094859fadb9e42fe64bccfeddfa3676137a5",
+      "visual_reason": "Same protagonist back/side view foreground, separate bald attacker behind"
+    },
+    {
+      "entity_id": "P_S07",
+      "detection_id": "manual_P_S07_f00000049",
+      "shot_id": "shot_0007",
+      "source_frame": 49,
+      "bbox_pixels": [
+        590,
+        530,
+        802,
+        775
+      ],
+      "bbox_format": "xyxy source pixels",
+      "source_size": [
+        1920,
+        1080
+      ],
+      "kind": "person",
+      "visibility": "medium",
+      "annotation_origin": "source-frame visual audit before examining new local/global identity outputs",
+      "image": "inputs/sintel_adaptive/shot_0007/frames/frame_00000049.jpg",
+      "image_sha256": "ba45e0828e0b9144efcab38f2428d894e9b839083fcbdfaafa866ba370df613f",
+      "visual_reason": "Red hair, white top, single metal shoulder plate, striped leg wraps; clear rear view despite wide scene"
+    },
+    {
+      "entity_id": "P_S08",
+      "detection_id": "manual_P_S08_f00000024",
+      "shot_id": "shot_0008",
+      "source_frame": 24,
+      "bbox_pixels": [
+        270,
+        131,
+        1000,
+        949
+      ],
+      "bbox_format": "xyxy source pixels",
+      "source_size": [
+        1920,
+        1080
+      ],
+      "kind": "person",
+      "visibility": "clear",
+      "annotation_origin": "source-frame visual audit before examining new local/global identity outputs",
+      "image": "inputs/sintel_adaptive/shot_0008/frames/frame_00000024.jpg",
+      "image_sha256": "1ba4ce243d5fcd8fb13c629569ce8a8a8a989338e8a86306ba446f601d09711d",
+      "visual_reason": "Red hair, white top, metal shoulder plate, face visible"
+    },
+    {
+      "entity_id": "P_S12",
+      "detection_id": "manual_P_S12_f00000015",
+      "shot_id": "shot_0012",
+      "source_frame": 15,
+      "bbox_pixels": [
+        0,
+        350,
+        680,
+        949
+      ],
+      "bbox_format": "xyxy source pixels",
+      "source_size": [
+        1920,
+        1080
+      ],
+      "kind": "person",
+      "visibility": "clear",
+      "annotation_origin": "source-frame visual audit before examining new local/global identity outputs",
+      "image": "inputs/sintel_adaptive/shot_0012/frames/frame_00000015.jpg",
+      "image_sha256": "fa3c0d753de14535e69d92667bfda1f11baaed98d068880387265d825a4424b8",
+      "visual_reason": "Rear view with matching red hair, white top and single shoulder plate"
+    },
+    {
+      "entity_id": "P_S12",
+      "detection_id": "manual_P_S12_f00000061",
+      "shot_id": "shot_0012",
+      "source_frame": 61,
+      "bbox_pixels": [
+        0,
+        131,
+        950,
+        949
+      ],
+      "bbox_format": "xyxy source pixels",
+      "source_size": [
+        1920,
+        1080
+      ],
+      "kind": "person",
+      "visibility": "clear",
+      "annotation_origin": "source-frame visual audit before examining new local/global identity outputs",
+      "image": "inputs/sintel_adaptive/shot_0012/frames/frame_00000061.jpg",
+      "image_sha256": "6be36e0e8782789a9147c2f63dd1265a452e572306c727f4f84f56dce4faf6f5",
+      "visual_reason": "Front close-up of same protagonist within shot, dragon excluded"
+    },
+    {
+      "entity_id": "P_S14",
+      "detection_id": "manual_P_S14_f00000102",
+      "shot_id": "shot_0014",
+      "source_frame": 102,
+      "bbox_pixels": [
+        483,
+        606,
+        512,
+        647
+      ],
+      "bbox_format": "xyxy source pixels",
+      "source_size": [
+        1920,
+        1080
+      ],
+      "kind": "person",
+      "visibility": "distant",
+      "annotation_origin": "source-frame visual audit before examining new local/global identity outputs",
+      "image": "inputs/sintel_adaptive/shot_0014/frames/frame_00000102.jpg",
+      "image_sha256": "008703f984b8678248375d5d51537fc0700bd4c7ee177edcb955e60d32bc22aa",
+      "visual_reason": "Small desert traveler with staff; continuity with title-fade shot15, identity less certain at this resolution"
+    },
+    {
+      "entity_id": "ATTACKER_S06",
+      "detection_id": "manual_ATTACKER_S06_f00000028",
+      "shot_id": "shot_0006",
+      "source_frame": 28,
+      "bbox_pixels": [
+        305,
+        212,
+        780,
+        949
+      ],
+      "bbox_format": "xyxy source pixels",
+      "source_size": [
+        1920,
+        1080
+      ],
+      "kind": "person",
+      "visibility": "clear",
+      "annotation_origin": "source-frame visual audit before examining new local/global identity outputs",
+      "image": "inputs/sintel_adaptive/shot_0006/frames/frame_00000028.jpg",
+      "image_sha256": "87c233b9eafaebe8ff04ac1fa8ac094859fadb9e42fe64bccfeddfa3676137a5",
+      "visual_reason": "Bald adult man with pointed dark beard behind protagonist; independent hard negative"
+    }
+  ]
+}

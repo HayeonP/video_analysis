@@ -158,6 +158,44 @@ def validate_story_contract(bundle, local, global_result):
                 unreviewed=unreviewed_rows, complete_track_review=unreviewed == 0)
 
 
+def consolidate_reviewed_bodies(observations, proofs):
+    """One extent per visually verified body, with every source box retained.
+
+    Proofs bind exact shot/frame/track/coordinates and cannot authorize another
+    frame, another identity, or silently discard a distinct physical body.
+    """
+    rows = {r['detection_id']: deepcopy(r) for r in observations}
+    audit = []
+    for proof in proofs:
+        selected = []
+        for member in proof['members']:
+            matches = [r for r in rows.values() if r['shot_id'] == proof['shot_id']
+                       and r['source_frame'] == proof['frame']
+                       and r['tracklet_id'] == member['track_id']]
+            if len(matches) != 1 or matches[0]['bbox_pixels'] != member['bbox']:
+                raise ValueError('Physical-body proof does not match exact source observation')
+            selected.append(matches[0])
+        if len({r['detection_id'] for r in selected}) != len(selected):
+            raise ValueError('Physical-body proof repeats a detection')
+        if any(r['entity_id'] != proof['entity_id'] for r in selected):
+            raise ValueError('Physical-body proof crosses identity assignments')
+        if not selected or not proof.get('reason') or not proof.get('review'):
+            raise ValueError('Physical-body consolidation requires recorded visual evidence')
+        outer = deepcopy(max(selected, key=lambda r: _box_area(r['bbox_pixels'])))
+        outer['bbox_pixels'] = [min(r['bbox_pixels'][0] for r in selected),
+                                min(r['bbox_pixels'][1] for r in selected),
+                                max(r['bbox_pixels'][2] for r in selected),
+                                max(r['bbox_pixels'][3] for r in selected)]
+        outer['bbox'] = [v / bound * 1000 for v, bound in zip(outer['bbox_pixels'], outer['source_size'] * 2)]
+        outer['consolidated_observations'] = selected
+        outer['physical_body_review'] = proof['review']
+        for row in selected:
+            del rows[row['detection_id']]
+        rows[outer['detection_id']] = outer
+        audit.append(dict(proof=proof, observations=selected, retained=outer['detection_id']))
+    return list(rows.values()), audit
+
+
 def suppress_duplicate_boxes(observations, threshold=.70, containment_threshold=.95):
     """Suppress geometric duplicates only within the SAME global ID/frame.
 
@@ -328,6 +366,7 @@ def _render_videos(bundle, timeline, samples, observations, labels, output, orig
     from PIL import ImageDraw
     sys.path.insert(0, str(ROOT.parent/'03_adaptive_sampling'))
     from media import VideoWriter
+    if bundle.get('analysis_frames') == 'sampled':original=False
     fps = Fraction(timeline['fps'])
     width, height = timeline['size']
     by_frame = defaultdict(list)
@@ -343,53 +382,49 @@ def _render_videos(bundle, timeline, samples, observations, labels, output, orig
     try:
         for shot, time_row in zip(bundle['shots'], timeline['shots']):
             sid, decoded = shot['shot_id'], 0
-            with av.open(str(shot['source'])) as container:
-                stream = container.streams.video[0]
-                stream.codec_context.thread_count = 2
-                for index, frame in enumerate(container.decode(stream)):
-                    if index >= int(shot['frame_count']):
-                        raise ValueError(f'Source has extra frames: {sid}')
-                    if (frame.width, frame.height) != (width, height):
-                        raise ValueError(f'Source size changed: {sid}')
-                    image = frame.to_image().convert('RGB')
-                    sample = sampled.get((sid, index))
-                    if sample:
-                        target = output/sample['image']; target.parent.mkdir(parents=True, exist_ok=True)
-                        image.save(target, quality=94)
-                    # Create missing representative crops from actual source pixels.
-                    for row in by_frame[(sid, index)]:
-                        crop = _asset_path(row.get('crop'), bundle, output)
-                        if crop is None:
-                            relative = f'crops/{row["detection_id"]}.jpg'
-                            target = output/relative; target.parent.mkdir(parents=True, exist_ok=True)
-                            x1, y1, x2, y2 = row['bbox_pixels']
-                            image.crop((max(0, int(x1)), max(0, int(y1)), min(width, int(math.ceil(x2))),
-                                        min(height, int(math.ceil(y2))))).save(target, quality=92)
-                            row['crop'] = relative
-                    if original_writer is None and sample is None:
-                        decoded += 1
-                        continue
-                    draw = ImageDraw.Draw(image)
-                    for row in by_frame[(sid, index)]:
-                        eid = row['entity_id']; color = entity_color(eid)
+            from sampled_frames import iter_shot_images
+            for index, image in iter_shot_images(shot):
+                if index >= int(shot['frame_count']):raise ValueError(f'Source has extra frames: {sid}')
+                if image.size != (width,height):raise ValueError(f'Source size changed: {sid}')
+                sample = sampled.get((sid, index))
+                if sample:
+                    target = output/sample['image']; target.parent.mkdir(parents=True, exist_ok=True)
+                    image.save(target, quality=94)
+                # Create missing representative crops from actual source pixels.
+                for row in by_frame[(sid, index)]:
+                    crop = _asset_path(row.get('crop'), bundle, output)
+                    if crop is None:
+                        relative = f'crops/{row["detection_id"]}.jpg'
+                        target = output/relative; target.parent.mkdir(parents=True, exist_ok=True)
                         x1, y1, x2, y2 = row['bbox_pixels']
-                        draw.rectangle((x1, y1, x2, y2), outline=color, width=max(2, width//450))
-                        label = f'{eid} | {labels[eid]}'
-                        tw = draw.textbbox((0, 0), label, font=font)[2]+10
-                        tx, ty = max(0, min(int(x1), width-tw)), max(35, int(y1)-font.size-8)
-                        draw.rectangle((tx, ty, tx+tw, ty+font.size+7), fill=(15, 18, 24))
-                        draw.text((tx+4, ty+2), label, fill=color, font=font)
-                    original_sec = time_row['original_start_sec']+float(index/fps)
-                    draw.rectangle((0, 0, width, 34), fill=(15, 18, 24))
-                    draw.text((10, 5), f'{sid}  |  original {original_sec:.3f}s  |  source frame {index}', font=header_font, fill='white')
-                    array = np.asarray(image)[:, :, ::-1].copy()
-                    full_frame = time_row['full_start_frame']+index
-                    if original_writer:
-                        original_writer.write(full_frame, array)
-                    if sample:
-                        adaptive_writer.write(full_frame, array); seen += 1
+                        image.crop((max(0, int(x1)), max(0, int(y1)), min(width, int(math.ceil(x2))),
+                                    min(height, int(math.ceil(y2))))).save(target, quality=92)
+                        row['crop'] = relative
+                if original_writer is None and sample is None:
                     decoded += 1
-            if decoded != int(shot['frame_count']):
+                    continue
+                draw = ImageDraw.Draw(image)
+                for row in by_frame[(sid, index)]:
+                    eid = row['entity_id']; color = entity_color(eid)
+                    x1, y1, x2, y2 = row['bbox_pixels']
+                    draw.rectangle((x1, y1, x2, y2), outline=color, width=max(2, width//450))
+                    label = f'{eid} | {labels[eid]}'
+                    tw = draw.textbbox((0, 0), label, font=font)[2]+10
+                    tx, ty = max(0, min(int(x1), width-tw)), max(35, int(y1)-font.size-8)
+                    draw.rectangle((tx, ty, tx+tw, ty+font.size+7), fill=(15, 18, 24))
+                    draw.text((tx+4, ty+2), label, fill=color, font=font)
+                original_sec = time_row['original_start_sec']+float(index/fps)
+                draw.rectangle((0, 0, width, 34), fill=(15, 18, 24))
+                draw.text((10, 5), f'{sid} | original {original_sec:.3f}s | frame {index}' + (' | SAMPLED observation held' if shot.get('analysis_frames') == 'sampled' else ''), font=header_font, fill='white')
+                array = np.asarray(image)[:, :, ::-1].copy()
+                full_frame = time_row['full_start_frame']+index
+                if original_writer:
+                    original_writer.write(full_frame, array)
+                if sample:
+                    adaptive_writer.write(full_frame, array); seen += 1
+                decoded += 1
+            expected_count = len(shot['adaptive_frames']) if shot.get('analysis_frames') == 'sampled' else int(shot['frame_count'])
+            if decoded != expected_count:
                 raise ValueError(f'Source decode count differs: {sid}: {decoded} != {shot["frame_count"]}')
     finally:
         adaptive_writer.close()
@@ -420,7 +455,13 @@ def export_story(bundle, local, global_result, output, adaptive_input=None, *, r
     """
     output = Path(output); output.mkdir(parents=True, exist_ok=True)
     coverage = validate_story_contract(bundle, local, global_result)
+    if bundle.get('analysis_frames') == 'sampled':
+        from sampled_frames import assert_sampled_evidence
+        assert_sampled_evidence(bundle)
+        render_original=False
     timeline, samples = _timeline_and_samples(bundle, adaptive_input)
+    timeline['analysis_frames']=bundle.get('analysis_frames','dense')
+    timeline['display_policy']='Selected observations held until next sample; intervening frames unobserved' if bundle.get('analysis_frames')=='sampled' else 'Dense observations'
     time_shots = {s['id']: s for s in timeline['shots']}
     local_shots = {s['shot_id']: s for s in local['shots']}
     global_entities = {str(e['entity_id']): dict(e) for e in global_result['entities']}
@@ -463,7 +504,11 @@ def export_story(bundle, local, global_result, output, adaptive_input=None, *, r
                     crop=observation.get('crop'), image=observation.get('image'),
                     identity_status=global_entity.get('identity_status', 'unresolved' if global_entity.get('uncertain') else 'estimated'),
                     identity_method='dense within-shot tracking, local review and global story association'))
+    observations, physical_groups = consolidate_reviewed_bodies(observations, global_result.get('physical_groups', []))
     observations, duplicates = suppress_duplicate_boxes(observations)
+    duplicates['reviewed_physical_groups'] = physical_groups
+    if global_result.get('one_entity_per_frame') and duplicates['conflict_count']:
+        raise ValueError('Hard identity invariant violated: multiple distinct boxes for one entity/frame. Fix identities before export; no boxes were hidden.')
     observations.sort(key=lambda r: (r['full_frame'], r['entity_id'], r['tracklet_id']))
     by_entity, by_frame = defaultdict(list), defaultdict(list)
     for row in observations:
@@ -547,6 +592,7 @@ def export_story(bundle, local, global_result, output, adaptive_input=None, *, r
             other_entities=[e for e in entries if e['kind'] != 'person'],
             initial_summary=reviewed.get('summary', ''), summary=final.get('summary', ''),
             summary_reconciled=sid in corrected, events=events,
+            transition=final.get('transition','unknown'),transition_evidence=final.get('transition_evidence',''),
             rejected_tracks=reviewed.get('rejected_tracks', []), uncertainty=final.get('uncertainty', [])))
     write_json(output/'shot_entities.json', shot_outputs)
     shot_ids = [s['shot_id'] for s in bundle['shots']]
